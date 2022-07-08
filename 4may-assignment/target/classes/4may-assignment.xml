@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:validation="http://www.mulesoft.org/schema/mule/validation" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/validation http://www.mulesoft.org/schema/mule/validation/current/mule-validation.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="fd503ab5-3aa5-4994-998f-e695181801d6" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<validation:config name="Validation_Config" doc:name="Validation Config" doc:id="8d6b5307-b04d-41d5-aced-5caa064fa770" />
+	<flow name="4may-assignmentFlow" doc:id="68a41668-eddf-4f52-8b41-8e2da80717f1" >
+		<http:listener doc:name="Listener" doc:id="7f4b9375-4b5f-474a-9d17-564e7abea6e8" config-ref="HTTP_Listener_config" path="/assig"/>
+		<set-payload value='#[[1,2,3,"abc",4,5,"xyz"]]' doc:name="Set Payload" doc:id="711336d6-46dc-4c83-b2a0-a0b925cc0191" />
+		<parallel-foreach doc:name="Parallel For Each" doc:id="ec7a63ae-9f9e-454b-b9e9-1618d0fd1875" collection="#[payload]">
+			<try doc:name="Try" doc:id="185d396f-6c91-458a-bfca-56ca6e655024" >
+				<validation:is-number doc:name="Is number" doc:id="56dfaf63-f9b5-496b-99ed-7cbbb58995c5" config-ref="Validation_Config" value="#[payload]" numberType="INTEGER"/>
+				<ee:transform doc:name="Transform Message" doc:id="fece5861-3eb6-4c41-9e49-39fa41792d96" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+{
+	result : payload 
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<logger level="INFO" doc:name="Logger" doc:id="551fa18f-4ebc-4cd4-8b66-866905759a43" message='#[payload]'/>
+				<error-handler >
+					<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="43aafa05-5ce6-4fdc-8c5b-415656cf91b7" >
+						<ee:transform doc:name="Transform Message" doc:id="9ab5ebff-af43-4467-8ef2-10f39a3f577a" >
+							<ee:message >
+								<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+{
+	result : payload 
+}]]></ee:set-payload>
+							</ee:message>
+						</ee:transform>
+						<logger level="INFO" doc:name="Logger" doc:id="04dc1483-d319-4c7c-ae60-20c92181e3dd" message='#[payload]'/>
+					</on-error-continue>
+				</error-handler>
+			</try>
+		</parallel-foreach>
+		<ee:transform doc:name="Transform Message" doc:id="602aa5aa-5876-4b96-b450-9853828f4f7d" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+flatten(payload..payload..result)]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="f381478b-9d62-46f6-9682-af63c7f86519" message="#[payload]"/>
+	</flow>
+</mule>
