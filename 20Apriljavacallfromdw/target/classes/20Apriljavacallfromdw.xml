@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="6603c0dd-e7c8-481f-b99c-fbf8a60e7660" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<flow name="20apriljavacallfromdwFlow1" doc:id="44f25814-b00e-46e8-9f84-1bd47b4a0e2e" >
+		<http:listener doc:name="Listener" doc:id="3fb9eded-fcb0-4927-bf5a-b847ad5e9d57" config-ref="HTTP_Listener_config" path="/dw"/>
+		<ee:transform doc:name="Transform Message" doc:id="4af4470f-dbe9-4201-ba9a-3df4a0987d6b" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+import java!javacallfromdw::Testdataweave
+output application/json
+---
+{
+	Payload : Testdataweave::appendRandom("this is random")
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="192c6e89-9614-430c-b636-4118bdb08371" message="#[payload]"/>
+	</flow>
+</mule>
