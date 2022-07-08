@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:file="http://www.mulesoft.org/schema/mule/file" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="6d445ac4-fc53-4883-9c52-c97f7b516f99" >
+		<http:listener-connection host="0.0.0.0" port="${http.listener.port}" />
+	</http:listener-config>
+	<db:config name="Database_Config" doc:name="Database Config" doc:id="1bb4bebf-b14b-400d-9d96-a1cc3e7a749f" >
+		<db:mssql-connection host="${db.host}" instanceName="MuleTraining" port="1433" user="Training" password="Training123" databaseName="muletrainig" />
+	</db:config>
+	<configuration-properties doc:name="Configuration properties" doc:id="3cdb2982-32dd-44cc-99f2-821a21f748b4" file="${env}-db-project.yaml" />
+	<global-property doc:name="Global Property" doc:id="c6ebb991-07dc-4ce7-bdec-8e3f5cc3cd6e" name="env" value="dev" />
+	<flow name="25april-db-projectFlow" doc:id="17277fb5-8304-4f6b-8466-b820c3e58769" >
+		<http:listener doc:name="Listener" doc:id="31e5fa46-db08-455b-8c79-fcfb49269b34" config-ref="HTTP_Listener_config" path="/database"/>
+		<set-variable value="#[uuid()]" doc:name="Set Variable" doc:id="d49dd4ff-ae04-4a4f-854f-4c40810b4ee8" variableName="correlationId"/>
+		<logger level="INFO" doc:name="Logger" doc:id="21ab2148-cd6f-4d51-ab21-4a2f9a729cec" message="Coorlation Id-#[vars.correlationId] Flow Started"/>
+		<db:select doc:name="Select" doc:id="337f02c3-c713-4af6-b07e-88b708c5612b" config-ref="Database_Config">
+			<db:sql ><![CDATA[select * from production.brands where brand_id= :abc]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{
+	abc:attributes.queryParams.id
+}]]]></db:input-parameters>
+		</db:select>
+		<choice doc:name="Choice" doc:id="2e2bae91-8598-42ab-ac1b-e9c17120d9d1" >
+			<when expression="#[sizeOf(payload)&gt;0]">
+				<ee:transform doc:name="Transform Message" doc:id="f4fddb4e-4058-4393-839e-a8cb3ff2a57e">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+			</when>
+			<otherwise >
+				<ee:transform doc:name="Transform Message" doc:id="70fa8ca5-28f1-4c1d-a7a7-2463564dde0c" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	result : "No such value...."
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</otherwise>
+		</choice>
+		<logger level="INFO" doc:name="Logger" doc:id="9bd222b0-e68f-418b-853d-4512ac2d52f1" message="Coorlation Id-#[vars.correlationId] Flow Ended"/>
+	</flow>
+	<flow name="25april-db-projectFlow1" doc:id="5e15760c-78df-458f-93bc-abf6f4882afc" >
+		<http:listener doc:name="Listener" doc:id="3b733e42-68a0-4b9b-98eb-d38321383933" config-ref="HTTP_Listener_config" path="/insert"/>
+		<db:insert doc:name="Insert" doc:id="24750ad0-8dde-4bc4-a58a-031c32b604a5" config-ref="Database_Config">
+			<db:sql ><![CDATA[insert into dbo values(1,'hello')]]></db:sql>
+		</db:insert>
+		<ee:transform doc:name="Transform Message" doc:id="9ba5303f-357f-4ce0-a924-bdfdbd33f2bd" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="8106d397-8157-490a-8db4-968a28c44d3f" message="values inserted"/>
+	</flow>
+	<flow name="25april-db-projectFlow2" doc:id="e8a5c1cd-8d75-4681-ad15-51b7100d1fba" >
+		<db:listener table="testDB" doc:name="On Table Row" doc:id="c55098e0-bfc1-4544-9079-c80a712c1c39" config-ref="Database_Config" watermarkColumn="cust_id" idColumn="cust_id">
+			<scheduling-strategy >
+				<fixed-frequency />
+			</scheduling-strategy>
+		</db:listener>
+		<ee:transform doc:name="Transform Message" doc:id="d7033577-2369-48e8-8e56-d8539d1a1d30" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<file:write doc:name="Write" doc:id="95379d48-0af0-49c6-9969-8fc5f9a34b3f" path="C:\Users\NTUMPALA\Documents\Output\testDB.txt" mode="APPEND"/>
+		<logger level="INFO" doc:name="Logger" doc:id="328edccc-8ac2-4daa-8510-cc3f72f627ea" message="'ended'"/>
+	</flow>
+</mule>
