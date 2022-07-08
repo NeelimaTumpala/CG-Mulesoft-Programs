@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="3dbdd9a8-b4ab-40ea-b94a-a9889ce332e6" >
+		<http:listener-connection host="0.0.0.0" port="8082" />
+	</http:listener-config>
+	<http:request-config name="HTTP_Request_configuration" doc:name="HTTP Request configuration" doc:id="bda6899c-ef02-46d7-9810-199ff35079f4" >
+		<http:request-connection host=" neelima-calc-sapi.us-e2.cloudhub.io" />
+	</http:request-config>
+	<flow name="http-reqFlow" doc:id="2217aaab-ade2-4c33-97e8-2b6a5115f0ed" >
+		<http:listener doc:name="Listener" doc:id="754afe4a-bc5f-4ce8-9c7c-5a4f767f8f1d" config-ref="HTTP_Listener_config" path="/req"/>
+		<logger level="INFO" doc:name="Logger" doc:id="d82fa7ae-6e94-41ce-b39e-a5cfa85c176a" message="Received Payload - #[payload]"/>
+		<http:request method="POST" doc:name="Request" doc:id="fd3d3ec7-023f-4ad6-848a-5b841649caa9" config-ref="HTTP_Request_configuration" path="/calc"/>
+	</flow>
+</mule>
