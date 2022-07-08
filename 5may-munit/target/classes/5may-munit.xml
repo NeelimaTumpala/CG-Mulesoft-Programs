@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="ce8b3c49-726b-43e3-a482-be8be62688ff" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<flow name="5may-munitFlow" doc:id="ad213deb-22f4-4baf-b59c-37bc20199e8f" >
+		<http:listener doc:name="Listener" doc:id="5747d1c8-0ec9-4bf8-a3a5-da1000cc2b16" path="/add" config-ref="HTTP_Listener_config"/>
+		<logger level="INFO" doc:name="Logger" doc:id="e02b1068-3215-4595-ba47-35cce5806f65" message="Flow ended"/>
+		<ee:transform doc:name="Transform Message" doc:id="d55d4f4a-f065-42c5-8161-42d5b50019ec" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+{
+	result : attributes.queryParams.string1 ++ attributes.queryParams.string2
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="685ae2a2-9f13-417e-854a-dd3829110873" />
+	</flow>
+</mule>
