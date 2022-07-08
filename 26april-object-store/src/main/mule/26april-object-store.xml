@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:os="http://www.mulesoft.org/schema/mule/os"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="e20adead-2adb-486e-9758-73fdd261c6f2" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<os:object-store name="Object_store" doc:name="Object store" doc:id="69947235-5ff3-4a4e-93c8-6cb6fab79af8" entryTtl="5" expirationInterval="10" expirationIntervalUnit="SECONDS" />
+	<configuration-properties doc:name="Configuration properties" doc:id="f6101a17-6651-45e5-bff3-5765ffb788e8" file="properties.yaml" />
+	<flow name="26april-object-storeFlow" doc:id="a870c0c1-7f0f-476e-9f6c-14227e4ed155" >
+		<http:listener doc:name="Listener" doc:id="8e06eef7-2c76-4f06-b826-b40fcd378a6a" config-ref="HTTP_Listener_config" path="/object"/>
+		<set-variable value="#[uuid()]" doc:name="CorrelationId" doc:id="ee4b0a91-69a4-4850-af8f-e3af8057acda" variableName="correlationId"/>
+		<logger level="INFO" doc:name="Started Flow" doc:id="dd0e0efc-991a-40c7-a176-eaf883ee890b" message="Correlation Id - #[vars.correlationId] - Flow started"/>
+		<logger level="INFO" doc:name="Logger" doc:id="2364df21-90ee-47e1-8483-6ffa6245e741" message="After first logger"/>
+		<choice doc:name="Choice" doc:id="d7a826ae-ccc9-4fc6-8aa4-875263eb01a7" >
+			<when expression="#[payload.operation == 'objectstore']">
+				<flow-ref doc:name="Flow Referce to objectstoreSub_flow" doc:id="6e999d73-7d1a-40ec-bd8b-c005acff7d4f" name="objectstoreSub_Flow"/>
+				<logger level="INFO" doc:name="Logger" doc:id="64ece986-3264-4b76-88cb-8342e8755a37" message="executing objectStore"/>
+			</when>
+			<otherwise>
+				<flow-ref doc:name="Flow Refers to scattergatherSub_flow" doc:id="dd43055f-a593-478e-b92f-2205a4ed3ea0" name="scattergatherSub_flow"/>
+				<logger level="INFO" doc:name="Logger" doc:id="330c328d-c0df-4d1f-addb-3e42d4093d36" message="executing scatterGather"/>
+			</otherwise>
+		</choice>
+	</flow>
+	<sub-flow name="objectstoreSub_Flow" doc:id="5c0fcc40-0816-4a58-a0dd-32c4cebec4fb" >
+		<os:contains doc:name="Contains" doc:id="730298c8-930f-494a-9250-55b494319c43" key="credentials" objectStore="Object_store" target="objectStoreExists" />
+		<logger level="INFO" doc:name="Object Store Exists" doc:id="bb9659eb-8670-41a9-b423-a3b0d182910d" message="Correlation Id - #[vars.correlationId] - objectStoreExists - #[vars.objectStoreExists]" />
+		<choice doc:name="Choice" doc:id="694e727c-6a92-4aaa-93ec-db6c1fea0d77">
+			<when expression="#[vars.objectStoreExists == false]">
+				<os:store doc:name="Store" doc:id="de7bceee-1628-4522-8360-04e52c97105b" key="credentials" objectStore="Object_store">
+			<os:value><![CDATA[this is object store]]></os:value>
+		</os:store>
+			</when>
+			<otherwise>
+				<logger level="INFO" doc:name="Logger" doc:id="931fafa7-9d41-4db8-8aae-4a29fdf5bf16" message="Correlation Id - #[vars.correlationId] - object store already exists" />
+			</otherwise>
+		</choice>
+		<os:retrieve doc:name="Retrieve" doc:id="937a4aca-073c-4421-853d-dab0503cad21" key="credentials" objectStore="Object_store" />
+		<logger level="INFO" doc:name="Retirved payload" doc:id="1976c914-1c28-4433-8430-0f483c203856" message="correlatio Id - #[vars.correlationId] - retrive payload - #[payload]" />
+	</sub-flow>
+	<sub-flow name="scattergatherSub_flow" doc:id="2d8b59b6-ad41-44db-ac37-4fba35f79250" >
+		<scatter-gather doc:name="Scatter-Gather" doc:id="5d0951b8-8369-46d2-9de6-9f626a520cc2">
+			<route>
+				<ee:transform doc:name="Add" doc:id="d76cdc41-9fe5-4522-aa02-b806277d0031">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload.number1 as Number + payload.number2 as Number]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<logger level="INFO" doc:name="Logger" doc:id="f10bb9ee-5c76-4468-bc3c-5e98d6513570" message="add - #[payload]" />
+			</route>
+			<route>
+				<ee:transform doc:name="Substract" doc:id="6ee8e2ca-fdc8-4593-887e-a2ae83c21952">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload.number1 as Number - payload.number2 as Number]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<logger level="INFO" doc:name="Logger" doc:id="eb59b0dd-7511-48e8-92c6-6a993e381265" message="substract - #[payload]" />
+			</route>
+			<route>
+				<ee:transform doc:name="Multiply" doc:id="67de0353-a101-4a13-b1ef-10d01d61e779">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload.number1 as Number * payload.number2 as Number]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<logger level="INFO" doc:name="Logger" doc:id="d8d7866f-452d-4b48-a8a4-1bf3d1b384b0" message="multiply - #[payload]" />
+			</route>
+			<route>
+				<ee:transform doc:name="Divide" doc:id="09548bd0-11e1-43bc-b85a-c36aaa57fd1a">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload.number1 as Number / payload.number2 as Number]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<logger level="INFO" doc:name="Logger" doc:id="e452fde2-3439-4ff6-aab4-1f44f6121c73" message="divide - #[payload]" />
+			</route>
+		</scatter-gather>
+		<set-payload value="operation successful" doc:name="Set Payload" doc:id="cf0800f0-e375-4142-b8d9-42349b778d07" />
+	</sub-flow>
+</mule>
