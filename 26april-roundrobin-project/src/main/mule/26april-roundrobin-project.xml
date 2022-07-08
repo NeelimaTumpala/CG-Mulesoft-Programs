@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="1f018279-8f98-42f5-b203-0c3faffc7491" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<flow name="26april-roundrobin-projectFlow" doc:id="b4f1fd88-4005-43a4-8f39-f0fcb52b963c" >
+		<http:listener doc:name="Listener" doc:id="6f436c70-7e4b-46b7-af1c-862568e31866" config-ref="HTTP_Listener_config" path="/rr"/>
+		<ee:transform doc:name="Transform Message" doc:id="8aa2db3d-85be-4ecd-89b7-a0a71072c05d">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/java
+---
+payload]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+		<round-robin doc:name="Round Robin" doc:id="68df78da-cce8-4434-8898-4622e1e81c8e" >
+			<route >
+				<set-payload value="request1" doc:name="Set Payload" doc:id="c74e2dac-530a-49c8-a3f8-439252843e2c" />
+			</route>
+			<route >
+				<set-payload value="request2" doc:name="Set Payload" doc:id="f8b39744-639e-43b0-b23c-40e4b0480cdb" />
+			</route>
+			<route >
+				<set-payload value="request3" doc:name="Set Payload" doc:id="4379e85e-e800-445a-9159-3ec1dea47693" />
+			</route>
+		</round-robin>
+		<logger level="INFO" doc:name="Logger" doc:id="700d715a-406f-4a67-a5cb-99987c4e6536" message="Flow completed"/>
+	</flow>
+</mule>
