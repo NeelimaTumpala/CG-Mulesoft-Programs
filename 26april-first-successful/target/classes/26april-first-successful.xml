@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:file="http://www.mulesoft.org/schema/mule/file" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="6407728c-1218-4825-9bdb-76eb3d39063f" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<file:config name="File_Config" doc:name="File Config" doc:id="3547932f-8f29-42cf-bafa-b8f89e18b90f" />
+	<flow name="26april-first-successfulFlow" doc:id="83e328a4-0450-48d7-99fc-a9a2817b92d5" >
+		<http:listener doc:name="Listener" doc:id="bc939f87-c3d9-44bc-aeb9-aedf63943544" config-ref="HTTP_Listener_config" path="/ch"/>
+		<ee:transform doc:name="Transform Message" doc:id="18c94c00-a14b-401c-8ce5-47157a6af81d" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	result : attributes.queryParams.a as Number
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="20b3d62c-e692-4144-b899-351d1b4101e9" message="Flow Started"/>
+		<choice doc:name="Choice" doc:id="38a9da30-09dc-4aef-ad65-a4ecc3dc1552" >
+			<when expression="#[payload.result &gt; 5]">
+				<scatter-gather doc:name="Scatter-Gather" doc:id="7ed2fb77-41be-4202-9323-c8c68fe40b41" >
+					<route >
+						<set-payload value="This is from path 1" doc:name="Set Payload" doc:id="044e0ab9-758e-46a8-9b0c-9cbf68454c0d" />
+					</route>
+					<route >
+						<set-payload value="This is from path 2" doc:name="Set Payload" doc:id="746d7102-b3d7-4b22-9732-6f9c8ce9f8fb" />
+					</route>
+					<route >
+						<set-payload value="This is from path 3" doc:name="Set Payload" doc:id="16acd671-eda1-46cc-8a81-ef5a7de4701c" />
+					</route>
+				</scatter-gather>
+				<logger level="INFO" doc:name="Logger" doc:id="e143a9ee-dc92-4492-abda-7bd882186ced" message="Number greater than 5"/>
+				<set-payload value="#[%dw 2.0&#10;output application/json&#10;---&#10;payload..payload]" doc:name="Set Payload" doc:id="eb567f0b-d468-4f24-b241-56d0bd27b6a5" />
+			</when>
+			<otherwise >
+				<file:write doc:name="Write" doc:id="5f184fe6-053c-420b-b047-b929d8110b3a" config-ref="File_Config" path="C:\Users\NTUMPALA\Documents\Output\choice.txt">
+					<file:content ><![CDATA[#["Entered number is less than 5 " ++ now()]]]></file:content>
+				</file:write>
+				<logger level="INFO" doc:name="Logger" doc:id="9db0c0b5-9444-446e-a3cd-9136b92b599b" message="Number less than 5"/>
+			</otherwise>
+		</choice>
+	</flow>
+	<flow name="26april-first-successfulFlow1" doc:id="691a14eb-ad93-4cbf-b1d3-5c58d63dbad6" >
+		<http:listener doc:name="Listener" doc:id="1c127a06-bdf2-446c-80e4-d0e722816e8a" config-ref="HTTP_Listener_config" path="/fs"/>
+		<ee:transform doc:name="Transform Message" doc:id="096c3100-916d-4e6c-afdf-7c02171bd836" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"result" : "flow started"
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<first-successful doc:name="First Successful" doc:id="ac9917a2-f8f7-4fff-874f-0bebdf1c296e" >
+			<route >
+				<raise-error doc:name="Raise error" doc:id="f003f3cf-16d6-4ce0-bc00-5921117d0ba1" type="ANY:MULE_EXCEPTION"/>
+				<ee:transform doc:name="Transform Message" doc:id="fda641e6-3f20-491e-ace1-93bbfd60f343" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"result" : "from path 1"
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</route>
+			<route >
+				<raise-error doc:name="Raise error" doc:id="06b73ea8-f44a-4854-8681-e86bceb1179a" type="ANY:RUNTIME_EXCEPTION"/>
+				<ee:transform doc:name="Transform Message" doc:id="132a3602-b0cd-4ea1-bc9f-979bcd6f741b" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"result" : "from path 2"
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</route>
+			<route >
+				<raise-error doc:name="Raise error" doc:id="bd209a97-208e-41e2-aabb-06bcabdbb9f6" type="ANY:COMPILETIMEERROR"/>
+				<ee:transform doc:name="Transform Message" doc:id="9a418ab9-31c7-4a77-b2b3-f7af0a554c3b" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"result" : "from path 3"
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</route>
+		</first-successful>
+	</flow>
+</mule>
