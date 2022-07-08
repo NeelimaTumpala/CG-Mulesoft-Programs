@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:file="http://www.mulesoft.org/schema/mule/file" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="54262d3b-c08e-4f7e-a551-ad8548a2c90e" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<file:config name="File_Config" doc:name="File Config" doc:id="ad0a7e49-aa25-4d64-ae04-d1482bb8e149" />
+	<file:config name="File_Config1" doc:name="File Config" doc:id="6f4276e9-8a5e-4e4b-9746-24da12291de6" />
+	<flow name="22april-file-connector-projectFlow" doc:id="1885abfe-9010-479f-a677-5ce59d6bcfc9" >
+		<http:listener doc:name="Listener" doc:id="bbb760e4-656e-4d67-884d-0f2040dbf0d2" config-ref="HTTP_Listener_config" path="/read"/>
+		<logger level="INFO" doc:name="Logger" doc:id="444b9881-b789-4d6e-beb7-3ed82f89ea76" message="Flow Started"/>
+		<file:read doc:name="Read" doc:id="5f811d0a-9965-4c7f-b5e0-e0c6340bd40f" config-ref="File_Config" path="C:\Users\NTUMPALA\Documents\ReadFile\input.txt"/>
+		<logger level="INFO" doc:name="Logger" doc:id="acb45164-cf84-4940-a013-55997d23e100" message='#[payload ++ "--&gt;This is the data from output file-:)"]'/>
+		<file:write doc:name="Write" doc:id="ff56275d-d39c-4401-b3e9-1b0e756a4907" config-ref="File_Config" path="C:\Users\NTUMPALA\Documents\WriteFile\outputt.txt" mode="CREATE_NEW">
+			<file:content ><![CDATA[#["Happy Learning...^..."]]]></file:content>
+		</file:write>
+	</flow>
+	<flow name="22april-file-connector-projectFlow1" doc:id="7d0adde4-250d-4d62-8714-c8c5b15784f8" >
+		<file:listener doc:name="On New or Updated File" doc:id="0d44aed2-25c9-40bd-97e9-b743a89ec4c2" config-ref="File_Config1" directory="C:\Users\NTUMPALA\Documents\Input" recursive="false" autoDelete="true" moveToDirectory="C:\Users\NTUMPALA\Documents\Output" renameTo='#[attributes.fileName ++ "_Neelu"]'>
+			<scheduling-strategy >
+				<fixed-frequency frequency="5" timeUnit="SECONDS"/>
+			</scheduling-strategy>
+			<file:matcher filenamePattern="*csv" />
+		</file:listener>
+		<logger level="INFO" doc:name="Logger" doc:id="b6dd95e1-4e48-4d85-a6b1-eb46e2d2acca" message="#[payload]"/>
+	</flow>
+</mule>
