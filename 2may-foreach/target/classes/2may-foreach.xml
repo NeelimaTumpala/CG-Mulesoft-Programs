@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:file="http://www.mulesoft.org/schema/mule/file" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="38a1d82a-316f-4b28-89a9-2b616ff8b83e" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<flow name="2may-foreachFlow" doc:id="d41e0e57-05f6-40e3-b65e-3e2eab36576d" >
+		<http:listener doc:name="Listener" doc:id="78b3c104-0e94-4662-8deb-86492e764062" config-ref="HTTP_Listener_config" path="/fe"/>
+		<set-payload value="#[[1,2,3,4,5]]" doc:name="Set Payload" doc:id="f2e83da2-6513-4c50-acc3-75f1e3f2b384" />
+		<foreach doc:name="For Each" doc:id="fb8714c5-4d54-4231-bf3a-525cd717d156" collection="#[payload]">
+			<set-payload value='#[%dw 2.0&#10;output application/json&#10;---&#10;{&#10;	"result" : payload + 1&#10;}]' doc:name="Set Payload" doc:id="1116aef7-5bfb-4769-901c-594f811c28f3" />
+			<file:write doc:name="Write" doc:id="e5b3a412-7b3c-4db5-8c35-3bfded36a3f9" path="C:\Users\NTUMPALA\Documents\Output\foreach.txt" mode="APPEND"/>
+		</foreach>
+		<logger level="INFO" doc:name="Logger" doc:id="1b631d54-2b58-4105-abe7-fc99394a9ed9" message="#[payload]"/>
+	</flow>
+	<flow name="2may-foreachFlow1" doc:id="e37419af-8c01-458f-aee0-74d1c7565c88" >
+		<http:listener doc:name="Listener" doc:id="184134b5-0cc0-4902-958b-24121b884304" config-ref="HTTP_Listener_config" path="/aa"/>
+		<set-payload value="#[[1,2,3,4,5]]" doc:name="Set Payload" doc:id="97f257bf-f0c2-4bf7-9848-7123a02279b1" />
+		<foreach doc:name="For Each" doc:id="e4664c82-6fcc-4485-a786-fd6a104c6b64" collection="#[payload]">
+			<logger level="INFO" doc:name="Logger" doc:id="ec8ced61-6cfa-46a3-b12c-559a425aacd6" message="#[payload]"/>
+		</foreach>
+		<logger level="INFO" doc:name="Logger" doc:id="afde714d-4239-4382-855a-325e56f78d3c" message="#[payload]" />
+	</flow>
+</mule>
