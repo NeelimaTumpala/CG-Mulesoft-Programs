@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:secure-properties="http://www.mulesoft.org/schema/mule/secure-properties"
+	xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce" xmlns:file="http://www.mulesoft.org/schema/mule/file" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd
+http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd
+http://www.mulesoft.org/schema/mule/secure-properties http://www.mulesoft.org/schema/mule/secure-properties/current/mule-secure-properties.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="f42d6d37-ea65-47c4-b787-3f5212258563" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<file:config name="File_Config" doc:name="File Config" doc:id="eb616f73-dd23-4818-b864-1de11eb8597e" />
+	<salesforce:sfdc-config name="Salesforce_Config" doc:name="Salesforce Config" doc:id="f5836bc5-554c-42cf-a81b-e306901c4d77" >
+		<salesforce:basic-connection username="${secure::sales.username}" password="${secure::sales.password}" securityToken="${secure::sales.token}" />
+	</salesforce:sfdc-config>
+	<secure-properties:config name="Secure_Properties_Config" doc:name="Secure Properties Config" doc:id="4a3f1649-f919-4c59-824c-2f2a842d4aca" file="properties.yaml" key="Mules4Salesforce" />
+	<db:config name="Database_Config" doc:name="Database Config" doc:id="bffb47fd-f8cd-4a8c-8bda-7973affb5034" >
+		<db:mssql-connection host="muletraining.chw2qgl9jlno.us-east-1.rds.amazonaws.com" instanceName="MuleTraining" port="1433" user="Training" password="Training123" databaseName="muletrainig" />
+	</db:config>
+	<flow name="27april-salesforce-readfile-securepropertiesFlow" doc:id="cf9bf64f-ce1a-4d83-93dd-4df50645fe61" >
+		<http:listener doc:name="Listener" doc:id="2daeb0df-a6df-4020-a332-fb62d30e0843" config-ref="HTTP_Listener_config" path="/sf"/>
+		<set-variable value="#[uuid()]" doc:name="Set Variable" doc:id="d16b1405-a5c6-4806-8fb6-766cd70c0030" variableName="correlationId"/>
+		<logger level="INFO" doc:name="First Logger" doc:id="42488671-6243-4e00-aba7-cd7e85ae2ee1" message="Coorlation Id-#[vars.correlationId] Flow Started"/>
+		<choice doc:name="Choice" doc:id="19995638-2774-410a-8610-79fed3002a75" >
+			<when expression='#[payload.direction == "dbtosfdc"]'>
+				<flow-ref doc:name="Flow Refers to salesforceSub_Flow" doc:id="f6992eed-a6c7-444e-83ed-9ad7a20bcaa1" name="salesforceSub_Flow"/>
+			</when>
+			<otherwise >
+				<flow-ref doc:name="flow refers to sfdctodbSub_Flow" doc:id="ebd8b4f0-03cf-43b3-acd4-6a4845cf987e" name="sfdctodbSub_Flow"/>
+			</otherwise>
+		</choice>
+		<logger level="INFO" doc:name="Last Logger" doc:id="93f0d4a6-a645-4e6f-aa21-33b4055ff8e6" message="Coorlation Id-#[vars.correlationId] Flow Ended"/>
+	</flow>
+	<sub-flow name="salesforceSub_Flow" doc:id="4625af09-a9e6-46cf-867b-47ee4aea59cb" >
+		<file:read doc:name="Read" doc:id="eae073c3-03f3-4f35-b9db-8039d7163ef4" config-ref="File_Config" path="C:\Users\NTUMPALA\Desktop\DataWeave\new1.json" />
+		<salesforce:create doc:name="Create" doc:id="cb438c91-eee5-432b-9030-1744f4b0e171" config-ref="Salesforce_Config" type="Account" />
+		<ee:transform doc:name="Transform Message" doc:id="fd1ec4ae-ea7c-4e0d-86f9-777ab20f5b1b">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="eb1a2d24-370c-4caf-963c-997a222b2210" message="hi"/>
+	</sub-flow>
+	<sub-flow name="sfdctodbSub_Flow" doc:id="b7a93f1b-7684-4f75-95fb-a1a4a2a1bc91" >
+		<salesforce:query doc:name="Query" doc:id="ee5800a8-f88d-44a6-8b48-1d26d133f272" config-ref="Salesforce_Config" >
+			<salesforce:salesforce-query ><![CDATA[select Name,AccountNumber,Phone,BillingCity from Account where AccountNumber= ':accountNumber']]></salesforce:salesforce-query>
+			<salesforce:parameters ><![CDATA[#[output application/java
+---
+{
+	"accountNumber" : "1234"
+}]]]></salesforce:parameters>
+		</salesforce:query>
+		<logger level="INFO" doc:name="SFDC to DB Logger" doc:id="6c5db6cc-38b6-4383-98ec-40ffc9251faf" message="Retrived Query Result - #[payload]"/>
+		<ee:transform doc:name="Transform Message" doc:id="773765f8-e752-425d-8fc1-7753aec20eea" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload map (item,index) -> {
+	"Name" : item.Name,
+	"AccountNumber" : item.AccountNumber,
+	"BillingCity" : item.BillingCity,
+	"Phone" : item.Phone
+ }]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<db:insert doc:name="Insert" doc:id="7de33491-c693-4886-82e7-ee95c87f6c10" config-ref="Database_Config">
+			<db:sql ><![CDATA[insert into dbo.testDb values(:id, :name)]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{
+	"id" : payload[0].AccountNumber as Number,
+	"name" : payload[0].Name
+}]]]></db:input-parameters>
+		</db:insert>
+		<set-payload value="Record Inserted Successfully" doc:name="Set Payload" doc:id="8081a72a-5cbc-48d6-ac93-81340247e9b2" />
+	</sub-flow>
+</mule>
