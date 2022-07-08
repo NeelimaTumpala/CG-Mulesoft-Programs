@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="e4bfa1b8-a81d-4f31-be8f-dceec06281bc" >
+		
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<flow name="20apraddwithqueryparamFlow" doc:id="ed467daa-f2d2-42d0-aae6-513187012930" >
+		<http:listener doc:name="Listener" doc:id="1b2478d1-9c9d-4bfd-9bc6-84038551369a" config-ref="HTTP_Listener_config" path="/qry"/>
+		<logger level="INFO" doc:name="Logger" doc:id="2bded584-591f-4874-9b3a-4972daa7a79a" message="Flow started"/>
+		<logger level="INFO" doc:name="Logger" doc:id="6ce8a3dc-f88e-4cae-ad00-1bbedebd5e80" message="#[attributes.queryParams]"/>
+		<logger level="INFO" doc:name="Logger" doc:id="2b0bf026-43b5-4b6e-b88a-1e44c916b070" message="#[attributes.queryParams.c]"/>
+		<ee:transform doc:name="Transform Message" doc:id="34bbb579-7d6b-4f47-9d7c-40485610ffb1" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	result : attributes.queryParams.a as Number + attributes.queryParams.b as Number
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+</mule>
