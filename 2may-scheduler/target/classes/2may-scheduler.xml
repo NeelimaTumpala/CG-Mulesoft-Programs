@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd">
+	<flow name="2may-schedulerFlow" doc:id="c1e8f9ee-54b8-4c11-aaee-c605f587cc3f" >
+		<scheduler doc:name="Scheduler" doc:id="5e09a95c-0be7-4959-812f-a79fee860d4f" >
+			<scheduling-strategy >
+				<cron expression="4 * * * * ?" />
+			</scheduling-strategy>
+		</scheduler>
+		<set-variable value="#[uuid()]" doc:name="correlationId" doc:id="6613367a-c845-403c-90f7-9f6f177c740c" variableName="correlationId"/>
+		<logger level="INFO" doc:name="Logger" doc:id="7bc7772e-ae57-4809-bf1f-4b4ce32f40ee" message="Correlation Id - #[vars.correlationId] - Flow started"/>
+		<set-payload value="This is scheduler project" doc:name="Set Payload" doc:id="b48b5cba-a5d0-4408-9053-214e9289619f" />
+	</flow>
+</mule>
