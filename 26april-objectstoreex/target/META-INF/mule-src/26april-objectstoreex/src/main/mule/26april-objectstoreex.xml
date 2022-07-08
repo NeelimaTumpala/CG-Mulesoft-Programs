@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:os="http://www.mulesoft.org/schema/mule/os" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="c8ec569d-c989-4abd-855a-a110dd500ac9" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<os:object-store name="Object_store" doc:name="Object store" doc:id="99b7f2e0-378e-4025-aac0-1a823d8b4ffc" entryTtl="5" expirationInterval="10" expirationIntervalUnit="SECONDS" />
+	<flow name="26april-objectstoreexFlow" doc:id="e00b5ef8-f75c-489f-adfc-7d81b6b7acfe" >
+		<http:listener doc:name="Listener" doc:id="7f612479-3db2-4485-b80c-69bd702d2113" config-ref="HTTP_Listener_config" path="/ob"/>
+		<set-variable value="#[uuid()]" doc:name="correlationId" doc:id="31085d31-969d-44d4-aa02-3e20f8203053" variableName="correlationId"/>
+		<logger level="INFO" doc:name="Started flow" doc:id="480d66e0-b187-4f7b-b79c-84dea8307945" message="Correlatio Id - #[vars.correlationId] - Flow started"/>
+		<os:contains doc:name="Contains" doc:id="0149e411-96a3-4e4d-a1f6-994db8e866ca" key="credentials" target="objectStoreExists" objectStore="Object_store"/>
+		<logger level="INFO" doc:name="Object Store Exists" doc:id="acf15b06-f33c-45df-b285-e892abed9810" message="Correlatio Id - #[vars.correlationId] - object store Exists - #[vars.objectStoreExists]"/>
+		<choice doc:name="Choice" doc:id="5b219029-05e0-472b-b62f-65359f902015" >
+			<when expression="#[vars.objectStoreExists == false]">
+				<os:store doc:name="Store" doc:id="bcc4f922-fedf-457c-9d68-f9bf4f201b2c" key="credentials" objectStore="Object_store">
+			<os:value><![CDATA[This is object store]]></os:value>
+		</os:store>
+			</when>
+			<otherwise >
+				<logger level="INFO" doc:name="Logger" doc:id="6b011126-a73b-4b7e-af76-fe4686e3c303" message="Correlatio Id - #[vars.correlationId] - object store already exists"/>
+			</otherwise>
+		</choice>
+		<os:retrieve doc:name="Retrieve" doc:id="82ef249c-fa92-4c24-ae49-3a5e21dac459" key="credentials" objectStore="Object_store"/>
+		<logger level="INFO" doc:name="Retived payload" doc:id="51ba40c5-b6a1-4782-8ea2-51b33347135f" message="Correlatio Id - #[vars.correlationId] - Retived payload - #[payload]"/>
+	</flow>
+</mule>
