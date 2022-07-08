@@ -1,0 +1,3 @@
+http:
+  path: "/prod"
+  port: "8081"

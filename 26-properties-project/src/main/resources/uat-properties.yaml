@@ -1,0 +1,3 @@
+http:
+  path: "/uat"
+  port: "8081"
