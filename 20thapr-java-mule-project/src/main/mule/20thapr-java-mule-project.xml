@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:java="http://www.mulesoft.org/schema/mule/java" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/java http://www.mulesoft.org/schema/mule/java/current/mule-java.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="9afc04eb-ada2-4cfe-8e51-d31039a6c3c7" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<flow name="20thapr-java-mule-projectFlow" doc:id="c4052c99-bdc1-4305-a9a5-f4393cb3711d" >
+		<http:listener doc:name="Listener" doc:id="64e5d28c-8563-4730-9eeb-7de4d1fe89e5" config-ref="HTTP_Listener_config" path="/static"/>
+		<java:invoke-static doc:name="Invoke static" doc:id="df8259fa-0b76-47f9-b58b-a910af1314ce" class="com.mule.FruitPriceService" method="sayHello(java.lang.String,java.lang.String)">
+			<java:args ><![CDATA[#[%dw 2.0
+
+output application/java
+
+---
+
+{
+
+ 	name: attributes.queryParams.name as String,
+	city: attributes.queryParams.city as String
+
+
+}]]]></java:args>
+		</java:invoke-static>
+		<logger level="INFO" doc:name="Logger" doc:id="c7779ecc-691a-4e2b-81a4-e0fcd621ff76" message="#[payload]"/>
+	</flow>
+	<flow name="20thapr-java-mule-projectFlow1" doc:id="31bff7b1-64a3-40c8-8ddd-7c2635768d26" >
+		<http:listener doc:name="Listener" doc:id="5fc0bc7b-273e-4071-9f17-a10852be3c69" config-ref="HTTP_Listener_config" path="/non_static"/>
+		<java:new doc:name="New" doc:id="5cd7f370-4fb0-46a8-84d0-f9b9330912bb" target="javaObject" class="com.mule.FruitPriceService" constructor="FruitPriceService()"/>
+		<java:invoke doc:name="Invoke" doc:id="74a126df-3b9c-4b44-b1b7-d9369ef9081d" instance="#[vars.javaObject]" class="com.mule.FruitPriceService" method="getFruitPrice(java.lang.String)">
+			<java:args ><![CDATA[#[%dw 2.0
+output application/json
+---
+{
+	fruitName : attributes.queryParams.fruitName as String
+}]]]></java:args>
+		</java:invoke>
+		<logger level="INFO" doc:name="Logger" doc:id="56e6e1dd-4b49-49be-9751-1d3215bd8d18" message="#[payload]"/>
+	</flow>
+</mule>
