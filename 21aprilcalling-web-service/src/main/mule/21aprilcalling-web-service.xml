@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:wsc="http://www.mulesoft.org/schema/mule/wsc"
+	xmlns:jms="http://www.mulesoft.org/schema/mule/jms"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/jms http://www.mulesoft.org/schema/mule/jms/current/mule-jms.xsd
+http://www.mulesoft.org/schema/mule/wsc http://www.mulesoft.org/schema/mule/wsc/current/mule-wsc.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="f20d8e85-5f20-451e-a7fb-26c5b7898b41" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<http:request-config name="HTTP_Request_configuration" doc:name="HTTP Request configuration" doc:id="811e58c1-7126-40ca-9c26-03a50cbb8067" >
+		<http:request-connection host="reqres.in" />
+	</http:request-config>
+	<wsc:config name="Web_Service_Consumer_Config" doc:name="Web Service Consumer Config" doc:id="faec6b4f-95f0-45dc-a69f-fd5853b522f0" >
+		<wsc:connection wsdlLocation="http://dneonline.com/calculator.asmx?wsdl" service="Calculator" port="CalculatorSoap" address="http://dneonline.com/calculator.asmx" >
+			<wsc:web-service-security actor="http://schemas.xmlsoap.org/soap/actor/next" />
+		</wsc:connection>
+	</wsc:config>
+	<http:listener-config name="HTTP_Listener_config1" doc:name="HTTP Listener config" doc:id="a2efcc62-e485-487d-a9df-9356d699687e" >
+		<http:listener-connection host="0.0.0.0" port="8082" />
+	</http:listener-config>
+	<http:listener-config name="HTTP_Listener_config2" doc:name="HTTP Listener config" doc:id="c9c75965-b050-46de-a720-7116893d459d" >
+		<http:listener-connection host="0.0.0.0" port="8083" />
+	</http:listener-config>
+	<wsc:config name="Web_Service_Consumer_Config2" doc:name="Web Service Consumer Config" doc:id="ca648f57-4f17-4bd5-b91b-98eb0e1bb5c5" >
+		<wsc:connection wsdlLocation="hello.wsdl" port="HelloEndpointPort" address="https://www.learnwebservices.com/services/hello" service="HelloEndpointService"/>
+	</wsc:config>
+	<flow name="callin-rest-api" doc:id="e5d39444-4011-4f3e-9fa4-6bb59bdff200" >
+		<http:listener doc:name="Listener" doc:id="cbcd49d2-a39d-44b9-9453-b1708449b9bd" config-ref="HTTP_Listener_config" path="/rest"/>
+		<logger level="INFO" doc:name="Logger" doc:id="2a506f97-3f3c-48f5-b5ff-c89f9c2b686e" message="Starting flow"/>
+		<http:request method="GET" doc:name="Request" doc:id="52eb1406-268a-4ab1-bd97-512c0198335e" config-ref="HTTP_Request_configuration" path="/api/users">
+			<http:query-params ><![CDATA[#[output application/java
+---
+{
+	"page" : attributes.queryParams.page
+}]]]></http:query-params>
+		</http:request>
+		<logger level="INFO" doc:name="Logger" doc:id="ac33f3c7-7ce4-4ed1-ac12-3ae0a3425bd7" message="Ending Flow"/>
+		<logger level="INFO" doc:name="Logger" doc:id="1306aaac-df24-4e3a-b112-d0d249ba4893" message="final logger"/>
+	</flow>
+	<flow name="calling-soap-api" doc:id="b64e1459-dbad-4807-a89f-7995972559b8" >
+		<http:listener doc:name="Listener" doc:id="47a689b8-fc7b-4cc8-8658-68dafda47747" config-ref="HTTP_Listener_config1" path="/soap"/>
+		<logger level="INFO" doc:name="Logger" doc:id="061f9513-9927-44c9-9b90-566a1f0c385c" message="#[flow.name ++ 'started']"/>
+		<ee:transform doc:name="Transform Message" doc:id="67d2b4e1-52cb-4113-a818-e193b1de39d9" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/xml
+ns ns0 http://tempuri.org/
+---
+{
+	ns0#Add: {
+		ns0#intA: attributes.queryParams.a,
+		ns0#intB: attributes.queryParams.b
+	}
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<wsc:consume operation="Add" doc:name="Consume" doc:id="b2f254a8-a6de-4b35-ab88-68ae6265a6c7" config-ref="Web_Service_Consumer_Config"/>
+		<ee:transform doc:name="Transform Message" doc:id="e5dc1d7b-6313-4da8-8544-547b56dedca2" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0ns ns0 http://tempuri.org/
+
+output application/java
+---
+payload.body.ns0#AddResponse.ns0#AddResult]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="a39b914a-1409-4f45-900f-c53428203b88" message="#[flow.name ++ 'Ended']"/>
+	</flow>
+	<flow name="calling-soap-api-string" doc:id="c0fea89a-5f08-48a7-b89c-8173b0b2b584" >
+		<http:listener doc:name="Listener" doc:id="28406a71-78c1-43bd-818e-d7af0445de5f" config-ref="HTTP_Listener_config2" path="/Api"/>
+		<logger level="INFO" doc:name="Logger" doc:id="c57c49c2-aa3a-499e-9af5-bacb1b3f1862" message="Starting"/>
+		<ee:transform doc:name="Transform Message" doc:id="88305ede-2f75-41f1-aeb3-1f86767a193a" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/xml
+ns ns0 http://learnwebservices.com/services/hello
+---
+{
+	ns0#SayHello: {
+		ns0#HelloRequest: {
+			ns0#Name: attributes.queryParams.a as String
+		}
+	}
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<wsc:consume doc:name="Consume" doc:id="82341fc6-46d6-44de-b162-cd40a2d58b48" config-ref="Web_Service_Consumer_Config2" operation="SayHello">
+		</wsc:consume>
+		<ee:transform doc:name="Transform Message" doc:id="b6d9479b-9d28-47a5-a351-1f3f39b38ada" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0ns ns0 http://learnwebservices.com/services/hello
+
+output application/json
+---
+payload.body.ns0#SayHelloResponse.ns0#HelloResponse]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="ac8a08a2-368e-4b40-b9e9-6395758eeb3a" message="Ending"/>
+	</flow>
+</mule>
