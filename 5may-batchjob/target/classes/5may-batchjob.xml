@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:file="http://www.mulesoft.org/schema/mule/file" xmlns:batch="http://www.mulesoft.org/schema/mule/batch"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/batch/current/mule-batch.xsd
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="510177dc-7bae-4be8-a4ac-2eae31efc55d" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<flow name="5may-batchjobFlow" doc:id="b1633ad1-73f0-4162-b229-299648809609" >
+		<http:listener doc:name="Listener" doc:id="d94bca72-55be-47f5-aa26-11bd74f90031" config-ref="HTTP_Listener_config" path="/batch"/>
+		<ee:transform doc:name="Transform Message" doc:id="585ea029-8bba-42f5-b35b-458bf9991fad" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+1 to 25]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<batch:job jobName="loadAndDispatch" doc:id="b4774ddb-8d79-4d01-8d7f-779d093ee9af" maxFailedRecords="-1" blockSize="5" schedulingStrategy="ROUND_ROBIN">
+			<batch:process-records >
+				<batch:step name="Batch_Step" doc:id="b69c8535-cb43-4923-ae74-3f84ef128075" acceptPolicy="ALL">
+					<ee:transform doc:name="Transform Message" doc:id="11e1f701-a4b7-4c72-b323-caa517d75e4d" >
+						<ee:message >
+							<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+payload as Number + 100]]></ee:set-payload>
+						</ee:message>
+					</ee:transform>
+					<batch:aggregator doc:name="Batch Aggregator" doc:id="5de18355-4b0a-4eb1-b577-547c18405194" size="5">
+						<file:write doc:name="Write" doc:id="a3c41e69-27ee-49a6-be23-e045ed4d55b7" path="C:\Users\NTUMPALA\Documents\Output\batchjob.txt">
+							<file:content ><![CDATA[#[write(payload, "application/json")]]]></file:content>
+						</file:write>
+					</batch:aggregator>
+				</batch:step>
+			</batch:process-records>
+			<batch:on-complete >
+				<logger level="INFO" doc:name="Logger" doc:id="26600a7f-1c25-4026-a500-f68078cac7cb" message="#[payload]"/>
+				<ee:transform doc:name="Transform Message" doc:id="f81101fa-0849-4f93-b5db-2a81da9cd545" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+payload]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</batch:on-complete>
+		</batch:job>
+	</flow>
+</mule>
