@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="8ba8d8a1-c826-42ce-b2ee-8de668e0ce0b" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<flow name="calculatorFlow" doc:id="3f5b4bfb-83f2-42e3-b35f-d9e7836f2967" >
+		<http:listener doc:name="Listener" doc:id="0f82dc5a-28ce-4d90-93c8-b321fead88cb" path="/add" config-ref="HTTP_Listener_config"/>
+		<set-variable value="100" doc:name="Set Variable" doc:id="518a2db5-92ae-4512-88f2-2cd414da020f" variableName="a"/>
+		<set-variable value="200" doc:name="Set Variable" doc:id="527d0a7b-efe7-4764-b9b3-7199b8aabb9f" variableName="b"/>
+		<set-payload value="#[output application/json --- vars.a+vars.b]" doc:name="Set Payload" doc:id="dbf95f19-d3c6-4b02-9a58-3c995495bf53" />
+		<logger level="INFO" doc:name="Logger" doc:id="8e13d020-f173-4f5f-9403-9656e2430975" message="flow ended"/>
+	</flow>
+</mule>
