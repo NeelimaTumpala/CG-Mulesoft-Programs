@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:sockets="http://www.mulesoft.org/schema/mule/sockets" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/sockets http://www.mulesoft.org/schema/mule/sockets/current/mule-sockets.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="43a27010-318c-4073-b18d-09f3d05903ff" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<http:request-config name="HTTP_Request_configuration" doc:name="HTTP Request configuration" doc:id="39e9644d-1d6d-4f16-a6e1-edfa3906119d" >
+		<http:request-connection host="/abc" />
+	</http:request-config>
+	<flow name="28april-onerror-continueFlow" doc:id="c75bffed-ba69-4722-b982-85b6fd60688a" >
+		<http:listener doc:name="Listener" doc:id="f13d9b91-18f5-4543-be72-68b797f3c969" config-ref="HTTP_Listener_config" path="/ec"/>
+		<set-variable value="" doc:name="correlationId" doc:id="30cb7713-a327-4e10-9568-c43cf532bfb4" variableName="correlationId"/>
+		<logger level="INFO" doc:name="Logger" doc:id="e12623c2-7f91-4a47-bbff-8cd626413087" message="correlation Id - #[vars.correlationId] - flow started"/>
+		<http:request method="GET" doc:name="Request" doc:id="81e59d0d-4632-44e3-9e50-410244579933" path="/12er" config-ref="HTTP_Request_configuration"/>
+		<error-handler >
+			<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="04e4b38c-9c85-4303-8097-ab95176f297e" >
+				<flow-ref doc:name="Flow Reference" doc:id="08bf5db6-8204-4ae2-a4b8-59899bb1f7c6" name="28april-onerror-continueSub_Flow"/>
+			</on-error-continue>
+		</error-handler>
+	</flow>
+	<sub-flow name="28april-onerror-continueSub_Flow" doc:id="55dc075c-5e61-4357-b3b2-64f5811b3aed" >
+		<logger level="INFO" doc:name="Logger" doc:id="7d6e27e8-ae42-4fc4-859b-d01987b67df5" message="correlation Id - #[vars.correlationId] - This is sub flow"/>
+		<set-payload value="Error occured on error continue" doc:name="Set Payload" doc:id="c0f90a0e-8761-4993-99cf-042f40974786" />
+	</sub-flow>
+</mule>
