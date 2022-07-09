@@ -1,0 +1,28 @@
+{
+  "configs": [
+    "testgobalhandler.xml",
+    "flow2.xml",
+    "globalerrorhandler.xml"
+  ],
+  "secureProperties": [],
+  "redeploymentEnabled": true,
+  "name": "com.mycompany:testgobalhandler:1.0.0-SNAPSHOT",
+  "minMuleVersion": "4.4.0",
+  "requiredProduct": "MULE",
+  "classLoaderModelLoaderDescriptor": {
+    "id": "mule",
+    "attributes": {
+      "exportedPackages": [],
+      "exportedResources": [
+        "flow2.xml",
+        "globalerrorhandler.xml",
+        "log4j2.xml",
+        "testgobalhandler.xml"
+      ]
+    }
+  },
+  "bundleDescriptorLoader": {
+    "id": "mule",
+    "attributes": {}
+  }
+}

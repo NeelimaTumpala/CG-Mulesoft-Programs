@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:validation="http://www.mulesoft.org/schema/mule/validation" xmlns:java="http://www.mulesoft.org/schema/mule/java"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/java http://www.mulesoft.org/schema/mule/java/current/mule-java.xsd
+http://www.mulesoft.org/schema/mule/validation http://www.mulesoft.org/schema/mule/validation/current/mule-validation.xsd">
+	<validation:config name="Validation_Config" doc:name="Validation Config" doc:id="0a441ba3-8208-4209-a923-b3c8828a0856" />
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="8e259b6a-2bad-4d16-87fb-ca0c696d8b3c" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<configuration doc:name="Configuration" doc:id="b9c9a52f-3415-4a31-bfb3-f15673de7921" defaultErrorHandler-ref="globalerrorhandlerError_Handler" />
+	<validation:config name="Validation_Config1" doc:name="Validation Config" doc:id="2e68b859-987b-44da-94ab-e4fb07aa361d" />
+	<flow name="testgobalhandlerFlow" doc:id="7e54aaa0-b1c6-4e43-8348-a33115cda402" >
+		<http:listener doc:name="Listener" doc:id="4e37470c-1a1d-4e53-8ae6-359f913f9827" config-ref="HTTP_Listener_config" path="/gl"/>
+		<logger level="INFO" doc:name="Logger" doc:id="0ea0a514-6903-4f36-a65a-ea1b0eaa68bd" message="abc"/>
+		<validation:is-number numberType="INTEGER" doc:name="Is number" doc:id="962fd53a-11a9-43ff-bb17-40b83deccb85" config-ref="Validation_Config1" value="#[payload]"/>
+		<logger level="INFO" doc:name="Logger" doc:id="bce1214f-ca76-4381-80a3-9b0bc3a6f3a7" message="#[paylaod]"/>
+		<error-handler ref="globalerrorhandlerError_Handler" />
+	</flow>
+</mule>

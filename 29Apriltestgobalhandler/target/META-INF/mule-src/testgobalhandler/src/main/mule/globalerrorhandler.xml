@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd">
+	<error-handler name="globalerrorhandlerError_Handler" doc:id="75e5aeba-23e8-46e1-8dd9-09ebd08826e5" >
+		<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="1e12df6b-bcd1-411b-a3fb-4351ab012732" type="VALIDATION::INVALID_NUMBER">
+			<set-payload value="Printing from global error" doc:name="Set Payload" doc:id="1a3b676a-f52a-4991-b094-822ee42c5b8f" />
+		</on-error-continue>
+		<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="a32013b4-82db-41ae-9d99-ec93503175e0" >
+			<logger level="INFO" doc:name="Logger" doc:id="35e83275-07a9-462f-b348-5b29e7074f49" message="Other error in Global"/>
+			<set-payload value="Other error in Global" doc:name="Set Payload" doc:id="954edb4a-13af-4aaf-925b-2defa625acb5" />
+		</on-error-continue>
+	</error-handler>
+</mule>
