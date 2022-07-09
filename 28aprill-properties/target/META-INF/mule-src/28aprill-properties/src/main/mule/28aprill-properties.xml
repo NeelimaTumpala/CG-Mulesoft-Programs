@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="af59543b-e8df-41c7-a92b-c6a8e3e7a184" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<configuration-properties doc:name="Configuration properties" doc:id="1f04e389-a3e5-4cc1-a304-7b2c946354cb" file="propertiess.yaml" />
+	<flow name="28aprill-propertiesFlow" doc:id="4b626eb1-1314-4956-a553-d8ccaa376606" >
+		<http:listener doc:name="Listener" doc:id="d5bd916e-1346-4970-bdcd-37ed6bcba13b" config-ref="HTTP_Listener_config" path="#[p('http.path')]"/>
+		<ee:transform doc:name="Transform Message" doc:id="fd4feb42-c16f-4e90-838f-7645cd6096d0" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+{
+	"result" : "success"
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="fd885cdc-5f0a-46c9-8a49-58d801bb3953" message="#[p('http.path')]"/>
+	</flow>
+</mule>
