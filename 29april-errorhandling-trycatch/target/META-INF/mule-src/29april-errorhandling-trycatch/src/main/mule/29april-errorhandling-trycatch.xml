@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="f3aa9399-e238-43cf-a5bf-8a65c5764ca2" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<http:request-config name="HTTP_Request_configuration" doc:name="HTTP Request configuration" doc:id="847fe4af-3cb8-4c8c-961a-e2b2ea3956b2" >
+		<http:request-connection host="/efgh" />
+	</http:request-config>
+	<flow name="29april-errorhandling-trycatchFlow" doc:id="692fb944-9ad4-42d9-a98c-c2e54e6c4cfa" >
+		<http:listener doc:name="Listener" doc:id="582d829b-1f70-4560-b52f-f7d3bee94a51" config-ref="HTTP_Listener_config" path="/tc"/>
+		<set-variable value="#[uuid()]" doc:name="correlationId" doc:id="a6356c7c-ebc0-42fc-a620-c882d793e438" variableName="correlationId"/>
+		<logger level="INFO" doc:name="Logger" doc:id="a2714a02-8368-4e54-9d54-46d5e8c05494" message="correlation Id - #[vars.correlationId] - try catch error handling"/>
+		<try doc:name="Try" doc:id="91918fef-03a4-4aaa-b8e1-ab9ecb234335" >
+			<http:request method="GET" doc:name="Request" doc:id="536932bc-3ecb-469f-9647-3c9096d6ff58" config-ref="HTTP_Request_configuration" path="/neelu" />
+			<error-handler>
+				<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="6f39cf46-d66c-4f17-806e-c12ed698a34e" >
+					<logger level="INFO" doc:name="Logger" doc:id="af6688a0-6f1c-49aa-9075-9dc930ebfaa9" message="Inside One error propagate"/>
+					<set-payload value="Inside One error propagate" doc:name="Set Payload" doc:id="b6f78d00-8722-40e7-ac46-e45b0258edb3" />
+				</on-error-propagate>
+			</error-handler>
+		</try>
+		<set-payload value="flow ended" doc:name="Set Payload" doc:id="69cbf65d-1374-4599-8043-4ecb1b356f8f" />
+	</flow>
+</mule>
