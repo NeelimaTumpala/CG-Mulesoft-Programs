@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="a998e7e3-4994-4a7f-81dd-dfaa99dbdfb2" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<http:request-config name="HTTP_Request_configuration" doc:name="HTTP Request configuration" doc:id="7f9d24d1-7a5a-4aef-b604-7e0464c9d10c" >
+		<http:request-connection host="/abcd" />
+	</http:request-config>
+	<flow name="28april-oneerrorpropagateFlow" doc:id="e91ee07c-2ce3-4013-a1b6-efddf4d7de3b" >
+		<http:listener doc:name="Listener" doc:id="2ef54b3e-e60a-42f2-935f-a93cb21d4fbd" path="/ep" config-ref="HTTP_Listener_config"/>
+		<set-variable value="" doc:name="correlationId" doc:id="76aa8f10-2915-4db6-90ef-34d963531e8d" variableName="correlationId"/>
+		<logger level="INFO" doc:name="Logger" doc:id="6260accf-202f-48d7-b31a-c14ae439b326" message="correlation Id - #[vars.correlationId] - flow started"/>
+		<http:request method="GET" doc:name="Request" doc:id="7e17b758-2516-4548-8dfb-972905e93164" config-ref="HTTP_Request_configuration" path="/xyz"/>
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="36c7da21-219b-4dcc-85bb-980a4fc09a11" >
+				<flow-ref doc:name="Flow Reference" doc:id="baab9459-16b5-4cc9-8923-8b3d28a422ac" name="28april-oneerrorpropagateSub_Flow"/>
+				<raise-error doc:name="Raise error" doc:id="baac8465-fe9e-483f-838d-8f94db8741ed" type="HTTP:REQUEST" description="Requested url is invalid"/>
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+	<sub-flow name="28april-oneerrorpropagateSub_Flow" doc:id="d24d056b-9936-4147-9f00-167b62b7321e" >
+		<logger level="INFO" doc:name="Logger" doc:id="4741f2cb-9078-40d5-82e8-0b4623909404" message="correlation Id - #[vars.correlationId] - In subflow"/>
+		<set-payload value="Error occured in propagate" doc:name="Set Payload" doc:id="9d6f0a82-8835-434d-8df6-e07db1b7095f" />
+	</sub-flow>
+</mule>
