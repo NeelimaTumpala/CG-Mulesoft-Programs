@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:java="http://www.mulesoft.org/schema/mule/java" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/java http://www.mulesoft.org/schema/mule/java/current/mule-java.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="98da4e9e-0f57-45f8-a621-e092956f4346" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<flow name="assignment2Flow" doc:id="108e017d-c656-4a59-a63c-2c407b789ed4" >
+		<http:listener doc:name="Listener" doc:id="4e7b9349-ceae-4d88-9214-2fa00924c607" config-ref="HTTP_Listener_config" path="/sales"/>
+		<logger level="INFO" doc:name="Logger" doc:id="cb85f724-e79f-497b-aaa9-e34a5dd5d7e5" message="Sales Started"/>
+		<set-variable value="" doc:name="correlarionId" doc:id="4cee36d1-e0ba-4f77-afbc-6f3a19babf99" variableName="correlarionId"/>
+		<logger level="INFO" doc:name="Logger" doc:id="7423c104-4509-4770-bb41-13f0823b8a77" message="'Correlatin ID' - #[vars.correlationId]"/>
+		<java:invoke-static doc:name="Invoke static" doc:id="812df479-c2ae-4823-92f5-429c8a2a64a0" class="salesProject.Sales" method="getAmount(java.lang.String)">
+			<java:args ><![CDATA[#[%dw 2.0
+output application/java
+---
+{
+	size : attributes.queryParams.size as String
+}]]]></java:args>
+		</java:invoke-static>
+		<logger level="INFO" doc:name="Logger" doc:id="3e776b07-2b5f-490c-a28c-f3998c2d257f" message="#[payload]"/>
+	</flow>
+</mule>
