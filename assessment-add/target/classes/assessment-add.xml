@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="1783a8d5-5f03-45ed-84ec-9effd9012e94" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<flow name="assessment-addFlow" doc:id="4674415e-ce09-4679-b363-7e3b3d74c5b3" >
+		<http:listener doc:name="Listener" doc:id="c04f44cd-78e3-45a6-9ed0-f28f18623e3a" config-ref="HTTP_Listener_config" path="/addOperation"/>
+		<logger level="INFO" doc:name="Logger" doc:id="08180682-a51e-4b80-ac22-e9bcade182b6" message="Addition Operation using queryParams"/>
+		<ee:transform doc:name="Transform Message" doc:id="d0e2c517-ae6e-4639-8d44-e6577b3cc7cd" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/xml
+---
+{
+	result:attributes.queryParams.a+attributes.queryParams.b
+	
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="a0a2a766-3fd8-4f6a-bb59-0d9894b14f6c" message='#[payload ++ "Well"]'/>
+	</flow>
+</mule>
