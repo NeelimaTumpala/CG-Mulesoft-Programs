@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:tls="http://www.mulesoft.org/schema/mule/tls" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/tls http://www.mulesoft.org/schema/mule/tls/current/mule-tls.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="ed590abd-7236-4395-b8f1-1798e6eaf07b" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<http:request-config name="HTTP_Request_configuration" doc:name="HTTP Request configuration" doc:id="c155d2cc-b6ae-465f-b4dc-a099b042c7cc">
+		<http:request-connection host="abc/abc" />
+	</http:request-config>
+	<flow name="29april-errorhandlingFlow" doc:id="2ed69b1b-55b2-4b5e-ae64-69c20468eb38" >
+		<http:listener doc:name="Listener" doc:id="48791402-3777-486c-af17-f2804685c834" config-ref="HTTP_Listener_config" path="/er">
+		</http:listener>
+		<set-payload value="Before Request Connector" doc:name="Set Payload" doc:id="88805171-d061-4c11-bca6-b2a9f811e05d" />
+		<http:request method="PUT" doc:name="Request" doc:id="bae584ca-1764-4257-8c36-57fa0e76005e" config-ref="HTTP_Request_configuration" path="/hi"/>
+		<set-payload value="After Request Connector" doc:name="Set Payload" doc:id="2d36eded-4aee-4f5b-904c-b111921247dc" />
+	</flow>
+</mule>
