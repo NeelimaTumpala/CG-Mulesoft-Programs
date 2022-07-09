@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="f3945741-5133-480f-b76e-df55476c75a4" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<flow name="calculatorFlow" doc:id="14d3ff22-8e82-4fda-a032-502fc337c2ba" >
+		<http:listener doc:name="Listener" doc:id="34bb15dc-fef0-4e9f-8a96-b6fc0d0f6752" config-ref="HTTP_Listener_config" path="/calc"/>
+		<logger level="INFO" doc:name="Logger" doc:id="2b5c17c0-8a45-4d81-a2b6-335971457ead" message="#[payload]"/>
+		<ee:transform doc:name="Transform Message" doc:id="18229bfb-06be-4ad6-8afa-c7ade63f6121" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="genericTransform" ><![CDATA[%dw 2.0
+output application/xml
+---
+{
+	result:
+	if(payload.operation == "add")
+		payload.a+payload.b
+	else if(payload.operation == "subtract")
+		payload.a-payload.b
+	else if(payload.operation == "multiply")
+		payload.a-payload.b
+	else if(payload.operation == "divide")
+		if(payload.b !=null and payload.b !=0) payload.a / payload.b
+			else "b can not be zero"
+	else
+		"no such operation exists"
+		
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<choice doc:name="Choice" doc:id="1a82a564-a802-4f04-b9d6-085fa644dc26" >
+			<when expression='#[payload.operation=="add"]'>
+				<ee:transform doc:name="Transform Message" doc:id="6d8a975a-0a5d-4002-a1ea-1e73d1535f0b">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/xml
+---
+{
+	result: payload.a + payload.b
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+			</when>
+			<when expression='#[payload.operation=="subtract"]'>
+				<ee:transform doc:name="Transform Message" doc:id="9b8541a5-06da-436e-91dd-1762dde15110">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/xml
+---
+{
+	result: payload.a - payload.b
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+
+			</when>
+			<when expression='#[payload.operation=="multiply"]'>
+				<ee:transform doc:name="Transform Message" doc:id="628dce0b-cff3-4899-9a3f-7aacf310e876" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/xml
+---
+{
+	result: payload.a * payload.b
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+
+			</when>
+			<when expression='#[payload.operation=="divide"]'>
+				<ee:transform doc:name="Transform Message" doc:id="9a2a3e85-dca4-4fef-9bfb-34a1841c7473" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/xml
+---
+{
+	result:if(payload.b !=null and payload.b !=0) payload.a / payload.b
+	else
+		"b can not be null..."
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+
+			</when>
+			<otherwise>
+				<logger level="INFO" doc:name="Logger" doc:id="9d1153c8-783c-4911-994c-47a0dd74464d" message="'No operation'"/>
+			</otherwise>
+		</choice>
+	</flow>
+</mule>
