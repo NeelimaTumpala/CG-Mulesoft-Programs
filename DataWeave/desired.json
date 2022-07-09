@@ -1,0 +1,13 @@
+{
+  "empDetails": {
+    "empName": "RAHUL",
+    "empID": "56345",
+    "empEmail": "rahul@xyz.com",
+    "empStatus": "Active",
+    "empAdress": {
+                    "empStreet": " Shastri Nagar",
+                    "empCity": "Delhi",
+                    "empPin": "110001"
+                }
+  }
+}
