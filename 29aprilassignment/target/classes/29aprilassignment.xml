@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce"
+	xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<db:config name="Database_Config" doc:name="Database Config" doc:id="92027a67-07e1-4d73-b1c2-52034723296d" >
+		<db:mssql-connection host="muletraining.chw2qgl9jlno.us-east-1.rds.amazonaws.com" instanceName="MuleTraining" port="1433" user="Training" password="Training123" databaseName="muletrainig" />
+	</db:config>
+	<salesforce:sfdc-config name="Salesforce_Config" doc:name="Salesforce Config" doc:id="1e7f256e-c6bc-4604-9a95-688d503ea62a" >
+		<salesforce:basic-connection username="neelima.tumpala@capgemini.com" password="Neelima@123" securityToken="EhiX9q3uhQS2IjZwTx4vRauH" />
+	</salesforce:sfdc-config>
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="5a007ab8-f84c-483d-8edb-a249a6dd3ab7" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<flow name="29aprilassignmentFlow" doc:id="69836e4b-ac47-4bd5-b8eb-7b087c265e32" >
+		<http:listener doc:name="Listener" doc:id="4b8576ec-fdd8-461f-904c-2b26aa5af4c4" config-ref="HTTP_Listener_config" path="/assi"/>
+		<set-variable value="" doc:name="correlatioId" doc:id="487916ce-94d5-4783-91e5-4f05cd40666f" variableName="correlatioId"/>
+		<logger level="INFO" doc:name="Logger" doc:id="aba3d6c5-c9ce-42b2-b243-8bd87db6fb03" message="Coorlation Id-#[vars.correlationId] Flow Started"/>
+		<db:select doc:name="Select" doc:id="583199bc-d40c-4b39-8804-ed2b2a7cf991" config-ref="Database_Config">
+			<db:sql ><![CDATA[select cust_id from dbo.testDB where cust_name = :name]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{
+	name : attributes.queryParams.name
+}]]]></db:input-parameters>
+		</db:select>
+		<ee:transform doc:name="Transform Message" doc:id="6b85cba6-2e27-4bb3-849e-8a2cbba3631b" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+[
+{
+	"Id" : payload[0].cust_id,
+	"Name" : "Tumpala",
+	"AccountNumber" : "2023",
+	"Phone" : "9885787412",
+	"Account_Number_c__c" : "1234",
+	"BillingCity" : "Delhi"
+}
+
+]]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<salesforce:upsert doc:name="Upsert" doc:id="20c4e2c1-a19f-43e9-b67b-c3ebb0616908" config-ref="Salesforce_Config" objectType="Account" externalIdFieldName="Account_Number_c__c"/>
+		<ee:transform doc:name="Transform Message" doc:id="12d50d41-59e4-4206-ae47-1b1dc6088522" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="2595f6a3-0b56-4700-814e-f5e6377c3ffa" message="Coorlation Id-#[vars.correlationId] Flow Ended"/>
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="4cb810ac-cfc2-4b94-8adc-00a401edf15a" >
+				<logger level="INFO" doc:name="Logger" doc:id="5d12e20b-848d-46f9-a626-59bc1fe2fdda" message="Exception Handled"/>
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+</mule>
