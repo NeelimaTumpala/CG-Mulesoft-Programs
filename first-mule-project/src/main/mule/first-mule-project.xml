@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd">
+	<flow name="first-mule-projectFlow" doc:id="255e66ff-0a85-4350-981b-ff294a1a0027" >
+		<db:delete doc:name="Delete" doc:id="737cb7ca-00d8-412b-9c87-4e8a9f5a32b7" />
+		<db:insert doc:name="Insert" doc:id="54fd1713-9c97-4982-ad39-392c1c61d779" />
+		<db:bulk-delete doc:name="Bulk delete" doc:id="31fd7c53-d0d4-4558-b888-6e32fb1df836" />
+	</flow>
+</mule>
