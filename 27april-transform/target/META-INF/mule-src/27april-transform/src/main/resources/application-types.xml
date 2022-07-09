@@ -1,0 +1,74 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<types:mule xmlns:types="http://www.mulesoft.org/schema/mule/types">
+  <types:catalog>
+    <types:type name="employeeJson" format="json">
+      <types:shape format="weave" example="examples/employee.json"><![CDATA[%dw 2.0
+
+type employeeJson = {|
+  empName: String, 
+  empID: Number {"typeId": "int"}, 
+  empEmail: String, 
+  empStatus: String
+|} {"example": "{\\\"empName\\\":\\\"RAHUL\\\",\\\"empID\\\":56345,\\\"empEmail\\\":\\\"rahul@xyz.com\\\",\\\"empStatus\\\":\\\"Active\\\"}"}
+
+]]></types:shape>
+    </types:type>
+    <types:type name="employeeXml" format="xml">
+      <types:example format="xml" element="empDetails" location="examples/employee.xml"/>
+    </types:type>
+    <types:type name="employeXml" format="xml">
+      <types:example format="xml" element="empDetails" location="examples/employee-1.xml"/>
+    </types:type>
+    <types:type name="desiredJson" format="json">
+      <types:shape format="weave" example="examples/desired.json"><![CDATA[%dw 2.0
+
+type desiredJson = {|
+  empDetails: {|
+    empName: String, 
+    empID: String, 
+    empEmail: String, 
+    empStatus: String, 
+    empAdress: {|
+      empStreet: String, 
+      empCity: String, 
+      empPin: String
+    |}
+  |}
+|} {"example": "{\\\"empDetails\\\":{\\\"empName\\\":\\\"RAHUL\\\",\\\"empID\\\":\\\"56345\\\",\\\"empEmail\\\":\\\"rahul@xyz.com\\\",\\\"empStatus\\\":\\\"Active\\\",\\\"empAdress\\\":{\\\"empStreet\\\":\\\" Shastri Nagar\\\",\\\"empCity\\\":\\\"Delhi\\\",\\\"empPin\\\":\\\"110001\\\"}}}"}
+
+]]></types:shape>
+    </types:type>
+  </types:catalog>
+  <types:enrichment select="#9fd5e2d6-4576-4653-abb0-f1d08b255390">
+    <types:processor-declaration>
+      <types:input-event>
+        <types:message>
+          <types:payload type="employeeJson"/>
+        </types:message>
+      </types:input-event>
+    </types:processor-declaration>
+  </types:enrichment>
+  <types:enrichment select="#3a395226-a976-40d8-abb1-7bb33e1c8c79">
+    <types:processor-declaration>
+      <types:input-event>
+        <types:message>
+          <types:payload type="employeeXml"/>
+        </types:message>
+      </types:input-event>
+    </types:processor-declaration>
+  </types:enrichment>
+  <types:enrichment select="#11ff1999-35fa-400a-b9ec-380585268e87">
+    <types:processor-declaration>
+      <types:input-event>
+        <types:message>
+          <types:payload type="employeXml"/>
+        </types:message>
+      </types:input-event>
+      <types:output-event>
+        <types:message>
+          <types:payload type="desiredJson"/>
+        </types:message>
+      </types:output-event>
+    </types:processor-declaration>
+  </types:enrichment>
+</types:mule>
