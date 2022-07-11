@@ -1,0 +1,447 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:file="http://www.mulesoft.org/schema/mule/file" xmlns:os="http://www.mulesoft.org/schema/mule/os"
+	xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="6b648e7f-d43c-451e-8eb4-9f35c42695dd" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<db:config name="Batch1" doc:name="Database Config" doc:id="f8c6ab30-b20d-4ca9-a2c3-966af940f54a" >
+		<db:mssql-connection host="muletraining.chw2qgl9jlno.us-east-1.rds.amazonaws.com" instanceName="MuleTraining" port="1433" user="Training" password="Training123" databaseName="Batch1"/>
+	</db:config>
+	<salesforce:sfdc-config name="Salesforce_Config" doc:name="Salesforce Config" doc:id="efab214a-e4da-4fd7-a71f-7a0251e3fb3c" >
+		<salesforce:basic-connection username="kabilesh.kannan@capgemini.com" password="kabilesh1213" securityToken="5vqPoCGuSqZUxuaOZs71zM7pD" />
+	</salesforce:sfdc-config>
+	<flow name="Sprint2" doc:id="56284f89-a110-4182-907e-afc35e5e73b8" >
+		<http:listener doc:name="Listener" doc:id="8123ef2f-9198-48ec-b1da-c106acfbaeaf" config-ref="HTTP_Listener_config" path="/sprint2"/>
+		<set-variable value="#[uuid()]" doc:name="CorrelationId" doc:id="0cb5fe15-ae90-44b3-a25f-318c2d32f5a3" variableName="correlationId"/>
+		<set-variable value="#[attributes.queryParams.id]" doc:name="ID" doc:id="1d1e3d5d-36cb-453e-a60d-d4395797fb0d" variableName="ID"/>
+		<logger level="INFO" doc:name="Logger" doc:id="17a155f7-a734-4a04-ac72-243771dd5d35" message="Flow Started"/>
+		<choice doc:name="Choice" doc:id="0ac1e649-ea0e-43d9-a3ef-1b6120ec56bd" >
+			<when expression='#[attributes.queryParams.operation == "DBtoSFDC"]'>
+				<db:select doc:name="Select" doc:id="edb48c7b-13ea-4a79-8b5a-bab844560f43" config-ref="Batch1">
+			<db:sql><![CDATA[select AccountNumber, Name, Phone, Industry, BillingAddress from Accounts where AccountNumber= :id]]></db:sql>
+					<db:input-parameters ><![CDATA[#[{
+	id : vars.ID
+}]]]></db:input-parameters>
+		</db:select>
+				<logger level="INFO" doc:name="Logger" doc:id="b50bc262-9829-479a-bc3f-d0242915f5b5" message="#[payload]"/>
+				<choice doc:name="Choice" doc:id="74492899-9a8f-4681-9994-aa6bb611cd49">
+			<when expression="#[sizeOf(payload) &gt; 0]">
+						<ee:transform doc:name="Transform Message" doc:id="bd3cfcaa-07cf-4cc4-b840-d7505cd3f625">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/java
+---
+payload map ( payload01 , indexOfPayload01 ) -> {
+	Name: payload01.Name,
+	BillingCity: payload01.BillingAddress,
+	Phone: payload01.Phone as String,
+	AccountNumber: payload01.AccountNumber as String,
+	Industry: payload01.Industry,
+	Account_Number_c__c: payload01.AccountNumber as String
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+						<salesforce:upsert doc:name="Upsert" doc:id="89c65de8-f0c0-45d9-a757-9fbb4865aaaa" config-ref="Salesforce_Config" objectType="Account" externalIdFieldName="Account_Number_c__c" />
+				<ee:transform doc:name="Transform Message" doc:id="88e41f3d-8d03-4ab5-ae14-e7af4c32798a">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload..payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+			</when>
+					<otherwise>
+				<ee:transform doc:name="Transform Message" doc:id="8a215c54-f87d-4181-8309-07157582bd37">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"Result": "no such records found"
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</otherwise>
+		</choice>
+				<logger level="INFO" doc:name="Logger" doc:id="5a102122-db56-4c83-86ad-2e9e08d228d9" message="Flow Ended" />
+			</when>
+			<when expression='#[attributes.queryParams.operation == "SFDCtoDB"]'>
+				<db:select doc:name="Select" doc:id="1a1e0ecc-69b5-4b08-b6c6-887e27590c9e" config-ref="Batch1">
+					<db:sql><![CDATA[select Name from Accounts where AccountNumber= :id]]></db:sql>
+					<db:input-parameters><![CDATA[#[{
+	"id": vars.ID
+}]]]></db:input-parameters>
+				</db:select>
+				<choice doc:name="Choice" doc:id="e2c28b9b-eec9-4401-b9f6-e9aa6a82883d">
+					<when expression="#[sizeOf(payload) &lt;= 0]">
+						<salesforce:query doc:name="Query" doc:id="446a6f1a-6e47-4ff6-8308-b751837676b6" config-ref="Salesforce_Config">
+			<salesforce:salesforce-query><![CDATA[select AccountNumber, Name, Phone, Industry, BillingCity from Account Where AccountNumber = ':accountid']]></salesforce:salesforce-query>
+			<salesforce:parameters><![CDATA[#[output application/java
+---
+{
+	'accountid' : vars.ID
+}]]]></salesforce:parameters>
+		</salesforce:query>
+						<logger level="INFO" doc:name="Logger" doc:id="1c83e38f-8046-4fe6-b98f-3ae1c6164956" message="#[payload]" />
+						<choice doc:name="Choice" doc:id="ec71af6d-5853-4774-9b48-8111648bf18c">
+					<when expression="#[sizeOf(payload) &gt; 0]">
+						<ee:transform doc:name="Transform Message" doc:id="c6a7a07f-95cf-4f44-b544-8847678095de">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/java
+---
+{
+	"Name": payload[0].Name ,
+	"AccountNumber": payload[0].AccountNumber as Number,
+	"Phone": payload[0].Phone as Number,
+	"BillingAddress": payload[0].BillingCity ,
+	"Industry": payload[0].Industry
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+						<db:insert doc:name="Insert" doc:id="1edfce1f-859b-4b2c-a49d-5c9a027e46c4" config-ref="Batch1">
+			<db:sql><![CDATA[INSERT INTO Accounts VALUES (:id,:name,:phone,:industry,:address);]]></db:sql>
+			<db:input-parameters><![CDATA[#[{
+	"id":payload.AccountNumber,
+	"name":payload.Name,
+	"phone":payload.Phone,
+	"industry":payload.Industry,
+	"address":payload.BillingAddress
+}]]]></db:input-parameters>
+		</db:insert>
+						<logger level="INFO" doc:name="Logger" doc:id="eb51ff53-3f90-4850-9bb4-bc8125839e51" message="#[payload]" />
+					</when>
+					<otherwise>
+						<ee:transform doc:name="Transform Message" doc:id="7b566979-c89e-4929-9b95-8c22011de7d2">
+							<ee:message>
+								<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"response" : "No such records found"
+}]]></ee:set-payload>
+							</ee:message>
+						</ee:transform>
+					</otherwise>
+				</choice>
+					</when>
+					<otherwise >
+						<salesforce:query doc:name="Query" doc:id="8ce445f8-45b7-431d-a9e0-ea84307a89f1" config-ref="Salesforce_Config">
+							<salesforce:salesforce-query ><![CDATA[select AccountNumber, Name, Phone, Industry, BillingCity from Account Where AccountNumber = ':id']]></salesforce:salesforce-query>
+							<salesforce:parameters ><![CDATA[#[output application/java
+---
+{
+	'id' : vars.ID
+}]]]></salesforce:parameters>
+						</salesforce:query>
+						<logger level="INFO" doc:name="Logger" doc:id="02fa868a-54d6-4ca2-941f-c18980c5b02e" message="#[payload]"/>
+						<choice doc:name="Choice" doc:id="caddbc04-2a74-4051-9952-eb0ab9d925eb" >
+							<when expression="#[sizeOf(payload) &gt; 0]">
+								<ee:transform doc:name="Transform Message" doc:id="e734f4cc-99c7-4ba3-98c2-31c3cda34453" >
+									<ee:message >
+										<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+{
+	"Name": payload[0].Name ,
+	"AccountNumber": payload[0].AccountNumber as Number,
+	"Phone": payload[0].Phone as Number,
+	"BillingAddress": payload[0].BillingCity ,
+	"Industry": payload[0].Industry
+}]]></ee:set-payload>
+									</ee:message>
+								</ee:transform>
+								<db:update doc:name="Update" doc:id="6087f513-6f0c-47bc-8f51-4c122c983863" config-ref="Batch1">
+									<db:sql ><![CDATA[UPDATE Accounts SET Name = :name , Phone = :phone, Industry = :industry, BillingAddress = :city WHERE AccountNumber = :id]]></db:sql>
+									<db:input-parameters ><![CDATA[#[{
+      name: payload.Name,
+      id: "2",
+      phone: payload.Phone,
+      city: payload.BillingAddress,
+      industry: payload.Industry
+}]]]></db:input-parameters>
+								</db:update>
+								<logger level="INFO" doc:name="Logger" doc:id="9d0e3d88-e38d-4419-9f81-9011baf42bab" message="#[payload]"/>
+							</when>
+							<otherwise >
+								<ee:transform doc:name="Transform Message" doc:id="95194df5-addd-40b5-94fe-ad4cfbc0f618" >
+									<ee:message >
+										<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"response":"There is no such account"
+}]]></ee:set-payload>
+									</ee:message>
+								</ee:transform>
+							</otherwise>
+						</choice>
+					</otherwise>
+				</choice>
+			</when>
+			<otherwise>
+				<ee:transform doc:name="Transform Message" doc:id="aa5cf270-ffc0-44c4-89fd-df416a65249e" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"response":"Give any choice"
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</otherwise>
+		</choice>
+		<logger level="INFO" doc:name="Logger" doc:id="ab83d0c9-f083-4326-8855-075a674f399e" message="Flow ended" />
+		<set-payload value="Record Added" doc:name="Set Payload" doc:id="81582f87-d803-489e-9bb0-c2a3d499b0b0" />
+	</flow>
+	<flow name="SFDC" doc:id="6fca6131-da3f-4a02-a22f-dfd1b116c3cc" >
+		<http:listener doc:name="Listener" doc:id="0e19f8bc-d436-4395-9aed-153b26431dfa" config-ref="HTTP_Listener_config" path="/sfdc"/>
+		<set-variable value="#[uuid()]" doc:name="CorrelationId" doc:id="426c9d92-610b-4ac0-8902-4d6769bc865c" variableName="correlationId"/>
+		<set-variable value="#[attributes.queryParams.accid]" doc:name="AccountNumber" doc:id="d7e4cf34-317f-4637-94e2-8a2892caee4d" variableName="ID"/>
+		<set-variable value="#[attributes.queryParams.name]" doc:name="Name" doc:id="e5f1e5bc-1dab-4413-82d4-6b89d3f49d5e" variableName="Name"/>
+		<set-variable value="#[attributes.queryParams.phone]" doc:name="Phone" doc:id="6cf1bc94-4aa7-4b88-b5cd-e6e7930609be" variableName="Phone"/>
+		<set-variable value="#[attributes.queryParams.address]" doc:name="Address" doc:id="633d1cd6-c8f1-4e75-a8d7-2ed46e83afd7" variableName="Address"/>
+		<set-variable value="#[attributes.queryParams.industry]" doc:name="Industry" doc:id="cc0eb82e-28f3-4af8-96f9-2a7072bed1d2" variableName="Industry"/>
+		<choice doc:name="Choice" doc:id="dc521e69-83fe-453a-bebd-6728813bd1b4" >
+			<when expression='#[payload.a == "create"]'>
+				<ee:transform doc:name="Transform Message" doc:id="c97c0111-8cd4-446b-8191-79b799099fcc">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/java
+---
+[
+	{
+		"Name" : vars.Name ,
+		"AccountNumber" : vars.ID,
+		"Account_Number_c__c": vars.ID ,
+		"Phone" : vars.Phone ,
+		"BillingCity" : vars.Address ,
+		"Industry" : vars.Industry
+	}
+]]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+				<salesforce:create doc:name="Create" doc:id="f13af492-fb0a-4620-8ae1-08cbe3280259" config-ref="Salesforce_Config" type="Account" />
+				<ee:transform doc:name="Transform Message" doc:id="cf63b5c8-0f29-4ced-81cf-e434d5517fc8">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload..payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+				<logger level="INFO" doc:name="Logger" doc:id="07649214-4b2b-40f9-9ffc-476cd2dfe7e9" message='#[payload] - "Record created"' />
+			</when>
+			<when expression='#[payload.a == "upsert"]'>
+				<salesforce:query doc:name="Query" doc:id="13742dd3-399c-4472-8b12-d9b7349538f4" config-ref="Salesforce_Config">
+			<salesforce:salesforce-query><![CDATA[select Id from Account Where AccountNumber = ':accountid']]></salesforce:salesforce-query>
+			<salesforce:parameters><![CDATA[#[output application/java
+---
+{
+	"accountid" : attributes.queryParams.accid
+}]]]></salesforce:parameters>
+		</salesforce:query>
+				<ee:transform doc:name="Transform Message" doc:id="04e3d4de-45a3-4d95-b0e7-633bdb18ca4c">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/java
+---
+[
+	{
+		Id: payload[0].Id,
+		"Name" : vars.Name ,
+		"AccountNumber" : vars.ID,
+		"Account_Number_c__c": vars.ID ,
+		"Phone" : vars.Phone ,
+		"BillingCity" : vars.Address ,
+		"Industry" : vars.Industry
+	}
+]]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+				<salesforce:upsert doc:name="Upsert" doc:id="9fa7f72b-7743-47d2-a098-e2248641fcbe" config-ref="Salesforce_Config" objectType="Account" externalIdFieldName="Account_Number_c__c" />
+				<ee:transform doc:name="Transform Message" doc:id="cff8b30c-3d4a-4c11-9b84-612785d6721e">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+			</when>
+			<when expression='#[payload.a == "delete"]'>
+				<salesforce:query doc:name="Query" doc:id="0f1a48aa-f104-4972-b78c-150e01e99a81" config-ref="Salesforce_Config">
+			<salesforce:salesforce-query><![CDATA[select AccountNumber, Name, Phone, Industry, BillingCity, Id from Account Where AccountNumber = ':accountid']]></salesforce:salesforce-query>
+			<salesforce:parameters><![CDATA[#[output application/java
+---
+{
+	"accountid" : attributes.queryParams.accid
+}]]]></salesforce:parameters>
+		</salesforce:query>
+				<ee:transform doc:name="Transform Message" doc:id="fb6274e2-8e50-4694-975b-f0c821a4026d">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/java
+---
+[payload[0].Id]]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+				<salesforce:delete doc:name="Delete" doc:id="6756691c-ffa0-4830-a703-93b78d0e367d" config-ref="Salesforce_Config" />
+				<ee:transform doc:name="Transform Message" doc:id="28ee736d-d408-49f2-b399-3cd3aec919ea">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload..payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+			</when>
+			<when expression='#[payload.a == "update"]'>
+				<salesforce:query doc:name="Query" doc:id="f0574e01-ea9e-4f43-8bca-40ab3c7c66f0" config-ref="Salesforce_Config">
+					<salesforce:salesforce-query ><![CDATA[select AccountNumber, Name, Phone, Industry, BillingCity, Id from Account Where AccountNumber = ':accountid']]></salesforce:salesforce-query>
+					<salesforce:parameters ><![CDATA[#[output application/java
+---
+{
+	"accountid" : attributes.queryParams.accid
+}]]]></salesforce:parameters>
+				</salesforce:query>
+				<ee:transform doc:name="Transform Message" doc:id="7f7adcf4-f9d4-4dec-a18c-a750829142d7">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/java
+---
+[
+	{
+		Id : payload[0].Id,
+		"Name" : vars.Name ,
+		"AccountNumber" : vars.ID,
+		"Account_Number_c__c": vars.ID ,
+		"Phone" : vars.Phone ,
+		"BillingCity" : vars.Address ,
+		"Industry" : vars.Industry
+	}
+]]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<salesforce:update doc:name="Update" doc:id="c4b016d0-45a0-49d9-ad6c-33b34831ccc8" config-ref="Salesforce_Config" type="Account"/>
+				<ee:transform doc:name="Transform Message" doc:id="584186a9-018a-4a29-99c5-d1928d585636" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload..payload]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</when>
+			<otherwise>
+				<ee:transform doc:name="Transform Message" doc:id="f48f2bc6-7b44-43b1-9861-ceb3911d3b22" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"response":"Invaid choice"
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</otherwise>
+		</choice>
+	</flow>
+	<flow name="DB" doc:id="4c82932a-66d6-4387-8445-6b12ded05037" >
+		<http:listener doc:name="Listener" doc:id="3c0ae040-41c7-482a-b592-7b1283d28dbc" config-ref="HTTP_Listener_config" path="/db"/>
+		<set-variable value="#[uuid()]" doc:name="CorrelationId" doc:id="f314f16f-48ad-452c-8751-741402be1fc3" variableName="correlationId"/>
+		<choice doc:name="Choice" doc:id="c6409b3a-6a93-4aab-a19a-b97520e6b326">
+			<when expression='#[payload.a == "select"]'>
+				<db:select doc:name="Select" doc:id="ae7206e2-9149-40ac-b69d-c33aba5608cc" config-ref="Batch1">
+			<db:sql><![CDATA[select * from Accounts]]></db:sql>
+		</db:select>
+				<ee:transform doc:name="Transform Message" doc:id="e153ce29-55f9-4ec6-80b7-7d99a772bf6e">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+			</when>
+			<when expression='#[payload.a == "update"]'>
+				<db:update doc:name="Update" doc:id="9ecdeb37-9822-4596-8ce3-58b2dd6c079d" config-ref="Batch1">
+			<db:sql><![CDATA[UPDATE Accounts SET Name = :name, Phone = :phone, Industry = :industry, BillingAddress = :address WHERE AccountNumber = :id]]></db:sql>
+			<db:input-parameters><![CDATA[#[{
+    id: attributes.queryParams.id ,
+	industry: attributes.queryParams.industry,
+	name: attributes.queryParams.name,
+	phone: attributes.queryParams.phone,
+	address: attributes.queryParams.address
+}]]]></db:input-parameters>
+		</db:update>
+				<ee:transform doc:name="Transform Message" doc:id="a556e92c-d65f-491a-af24-32c9200cc3d0">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+			</when>
+			<when expression='#[payload.a == "delete"]'>
+				<db:delete doc:name="Delete" doc:id="bbac658e-bb64-44eb-b9dc-5efffadf0818" config-ref="Batch1">
+			<db:sql><![CDATA[DELETE FROM Accounts where accountnumber = :id]]></db:sql>
+					<db:input-parameters ><![CDATA[#[{
+	id: attributes.queryParams.id
+}]]]></db:input-parameters>
+		</db:delete>
+				<ee:transform doc:name="Transform Message" doc:id="bd6d3ec8-97e2-4107-a13f-40ddd0c6e2ac">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+			</when>
+			<when expression='#[payload.a == "insert"]'>
+				<db:insert doc:name="Insert" doc:id="0d6b9d84-56af-4def-bb2d-69482def867d" config-ref="Batch1">
+					<db:sql ><![CDATA[INSERT INTO Accounts VALUES (:id,:name,:phone,:industry,:address);]]></db:sql>
+					<db:input-parameters ><![CDATA[#[{
+	id: attributes.queryParams.id ,
+	industry: attributes.queryParams.industry,
+	name: attributes.queryParams.name,
+	phone: attributes.queryParams.phone,
+	address: attributes.queryParams.address
+}]]]></db:input-parameters>
+				</db:insert>
+				<ee:transform doc:name="Transform Message" doc:id="e2eeb07f-bb9c-4c7b-b185-ccf457f13bef" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</when>
+			<otherwise>
+				<ee:transform doc:name="Transform Message" doc:id="b6ecaebc-4d69-4dc6-9e9c-90f5c6f69fc6" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"response":"Give any choice"
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</otherwise>
+		</choice>
+	</flow>
+</mule>
