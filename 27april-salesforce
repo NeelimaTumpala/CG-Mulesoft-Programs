@@ -1,0 +1,221 @@
+//27april-salesforce
+
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="e741fe2c-a4a2-4ca4-9823-57e8a3dd18e8" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<salesforce:sfdc-config name="Salesforce_Config" doc:name="Salesforce Config" doc:id="20d897c6-16b1-4fd1-84b3-cbdae0dbe006" >
+		<salesforce:basic-connection username="neelima.tumpala@capgemini.com" password="Neelima@123" securityToken="EhiX9q3uhQS2IjZwTx4vRauH" />
+	</salesforce:sfdc-config>
+	<flow name="createFlow" doc:id="501370fc-600b-4794-abf7-4a1a8c7a33bd" >
+		<http:listener doc:name="Listener" doc:id="da9c4e41-89c9-4709-913d-593b64316637" config-ref="HTTP_Listener_config" path="/sales"/>
+		<ee:transform doc:name="Transform Message" doc:id="596a642a-e305-4476-8cee-0e65a1313d64" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+[
+	{
+		Name : "Keshab",
+		AccountNumber: "2030",
+		Phone: "812211235",
+		BillingCity:"Jaipur",
+		Industry : "Delhi",
+		Account_Number_c__c : "2030"
+		
+	}
+]]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<salesforce:create doc:name="Create" doc:id="50655f88-3dd7-4c18-855a-2fc85db0c271" config-ref="Salesforce_Config" type="Account"/>
+	</flow>
+	<flow name="updateFlow" doc:id="1e8109e9-42c5-4325-b088-68344b0cf359" >
+		<http:listener doc:name="Listener" doc:id="c7c933c9-f20f-43d1-b2d3-c13f0f736f82" config-ref="HTTP_Listener_config" path="/update"/>
+		<set-variable value="#['2022']" doc:name="Set Variable" doc:id="9a81a9aa-7a6b-4bc2-8816-66e3cc9beff3" variableName="accountNumber"/>
+		<salesforce:query doc:name="Query" doc:id="1916cfa6-0152-41c1-8ebe-17b13bd08505" config-ref="Salesforce_Config">
+			<salesforce:salesforce-query ><![CDATA[select AccountNumber,Id,Name from Account where AccountNumber = ':accountNumber']]></salesforce:salesforce-query>
+			<salesforce:parameters ><![CDATA[#[output application/java
+---
+{
+	"accountNumber" : vars.accountNumber
+}]]]></salesforce:parameters>
+		</salesforce:query>
+		<logger level="INFO" doc:name="Logger" doc:id="3b4e7489-26a8-4a76-9acc-842ca6d1b80c" message="Start Flow"/>
+		<ee:transform doc:name="Transform Message" doc:id="c59f31e2-ca7d-4856-b4b1-2c5edf60867d" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+[
+	{
+		Id:payload[0].Id,
+		Name : "Test27April",
+		AccountNumber: "2022",
+		Phone: "8712199412",
+		BillingCity:"Noida"
+	}
+]]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<salesforce:update doc:name="Update" doc:id="8c87dbe3-9346-4af3-aafe-7ebc85b4c5cd" config-ref="Salesforce_Config" type="Account"/>
+		<logger level="INFO" doc:name="Logger" doc:id="a4ddd5f3-4ce7-4ce2-896b-4a09921de77b" message="Flow ended"/>
+	</flow>
+	<flow name="upsertFlow" doc:id="42551593-0864-49bc-ab69-bc00add77e3e" >
+		<http:listener doc:name="Listener" doc:id="f8a3ce63-aed6-4fe3-ab7f-0d437c4f0a88" config-ref="HTTP_Listener_config" path="/up"/>
+		<ee:transform doc:name="Transform Message" doc:id="4792e839-6f2a-44e7-8377-7865732034bf" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+[
+	{
+		Name : "Test27April",
+		AccountNumber: "2023",
+		Account_Number_c__c: "1234",
+		Phone: "8888",
+		BillingCity:"Delhi"
+	}
+]]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<salesforce:upsert doc:name="Upsert" doc:id="a21de9ba-1fd6-40d8-aaec-34c14c92fe5b" config-ref="Salesforce_Config" objectType="Account" externalIdFieldName="Account_Number_c__c"/>
+		<ee:transform doc:name="Transform Message" doc:id="bbf2f9f3-aaeb-4446-80e4-30befb7e121d" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="deleteFlow" doc:id="b41c2506-c2ff-4fcf-a21f-be62a25b1ffe" >
+		<http:listener doc:name="Listener" doc:id="671e4e60-e363-46ea-b672-077128cec94d" config-ref="HTTP_Listener_config" path="/del"/>
+		<set-variable value="#['2022']" doc:name="Set Variable" doc:id="f35e6dfe-0c90-4a26-af9c-c49276be524b" variableName="accountNumber"/>
+		<salesforce:query doc:name="Query" doc:id="a811ec20-5fb1-4cb9-8a1c-5565b12ad591" config-ref="Salesforce_Config">
+			<salesforce:salesforce-query ><![CDATA[select AccountNumber,Id,Name from Account where AccountNumber = ':accountNumber']]></salesforce:salesforce-query>
+			<salesforce:parameters ><![CDATA[#[output application/java
+---
+{
+	"accountNumber" : vars.accountNumber
+}]]]></salesforce:parameters>
+		</salesforce:query>
+		<logger level="INFO" doc:name="Logger" doc:id="f556d5c8-6a14-48ca-b598-58a2878f6b6e" message="#[payload]"/>
+		<ee:transform doc:name="Transform Message" doc:id="2d4f808e-c30d-4bb8-beeb-bcc7eac229dd" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+[payload[0].Id]]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<salesforce:delete doc:name="Delete" doc:id="8174c068-0597-4a45-a186-a9ddf1ae0569" config-ref="Salesforce_Config"/>
+	</flow>
+</mule>
+
+
+//In target
+//mule-artifact.json
+
+{
+  "minMuleVersion": "4.4.0"
+}
+
+
+//pom.xml
+
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<groupId>com.mycompany</groupId>
+	<artifactId>27april-salesforce</artifactId>
+	<version>1.0.0-SNAPSHOT</version>
+	<packaging>mule-application</packaging>
+
+	<name>27april-salesforce</name>
+
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+
+		<app.runtime>4.4.0-20220221</app.runtime>
+		<mule.maven.plugin.version>3.5.4</mule.maven.plugin.version>
+	</properties>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-clean-plugin</artifactId>
+				<version>3.0.0</version>
+			</plugin>
+			<plugin>
+				<groupId>org.mule.tools.maven</groupId>
+				<artifactId>mule-maven-plugin</artifactId>
+				<version>${mule.maven.plugin.version}</version>
+				<extensions>true</extensions>
+			</plugin>
+		</plugins>
+	</build>
+
+	<dependencies>
+		<dependency>
+			<groupId>org.mule.connectors</groupId>
+			<artifactId>mule-http-connector</artifactId>
+			<version>1.6.0</version>
+			<classifier>mule-plugin</classifier>
+		</dependency>
+		<dependency>
+			<groupId>org.mule.connectors</groupId>
+			<artifactId>mule-sockets-connector</artifactId>
+			<version>1.2.2</version>
+			<classifier>mule-plugin</classifier>
+		</dependency>
+		<dependency>
+			<groupId>com.mulesoft.connectors</groupId>
+			<artifactId>mule-salesforce-connector</artifactId>
+			<version>10.14.2</version>
+			<classifier>mule-plugin</classifier>
+		</dependency>
+	</dependencies>
+
+	<repositories>
+		<repository>
+			<id>anypoint-exchange-v3</id>
+			<name>Anypoint Exchange</name>
+			<url>https://maven.anypoint.mulesoft.com/api/v3/maven</url>
+			<layout>default</layout>
+		</repository>
+		<repository>
+			<id>mulesoft-releases</id>
+			<name>MuleSoft Releases Repository</name>
+			<url>https://repository.mulesoft.org/releases/</url>
+			<layout>default</layout>
+		</repository>
+	</repositories>
+
+	<pluginRepositories>
+		<pluginRepository>
+			<id>mulesoft-releases</id>
+			<name>MuleSoft Releases Repository</name>
+			<layout>default</layout>
+			<url>https://repository.mulesoft.org/releases/</url>
+			<snapshots>
+				<enabled>false</enabled>
+			</snapshots>
+		</pluginRepository>
+	</pluginRepositories>
+
+</project>
+
+
+
+
+
